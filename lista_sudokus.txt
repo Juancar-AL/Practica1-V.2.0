@@ -1,0 +1,11 @@
+9
+sudoku_2.txt
+sudoku_1.txt
+sudoku_3.txt
+sudoku_4.txt
+sudoku_5.txt
+sudoku_6.txt
+sudoku_7.txt
+sudoku_8.txt
+sudoku_9.txt
+

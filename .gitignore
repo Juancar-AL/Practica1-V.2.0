@@ -1,0 +1,17 @@
+# Ejecutables compilados de C++
+*.exe
+*.out
+*.app
+
+# Archivos objeto generados durante la compilación
+*.o
+*.obj
+
+# Carpetas de configuración locales de los editores de código
+.vscode/
+.vs/
+.idea/
+
+# Archivos basura del sistema operativo
+.DS_Store
+Thumbs.db
