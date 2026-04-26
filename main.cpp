@@ -5,7 +5,8 @@
 #include <unistd.h>
 #include <cmath>
 
-#include "reglas_sudoku.h"
+#include "lista_sudoku.h"
+
 #include "colors.h"
 
 using namespace std;
@@ -25,54 +26,39 @@ int mostrar_sudoku(const tReglasSudoku &reglas, const tError error);
 void poner_valor(tReglasSudoku &reglas, tError &error);
 void quitar_valor(tReglasSudoku &reglas, tError &error);
 int posibles_valores(tReglasSudoku &reglas, tError &error);
+void comenzar_partida(ifstream& archivo);
+
+//Modificado
+
+char start_menu();
+
+void continuar();
+void new_game(ListaSudoku& listado);
 
 void pausar();
 
 int main()
 {
 
-    tReglasSudoku reglas;
+    ListaSudoku lista;
+    
+    char opcion = start_menu();
 
-    tError error = ninguno;
+    switch (opcion)
+    {
+    case 'N':
+        new_game(lista);
+        break;
+    case 'C':
+
+    default:
+        break;
+    }
+
 
     ifstream archivo("sudoku_1.txt");
 
-    if (archivo.is_open())
-    {
-        if(reglas.carga_sudoku(archivo)){
-
-
-            int opcion = mostrar_sudoku(reglas, error);
-            while (opcion != 6)
-            {
-                error = ninguno;
-                switch (opcion)
-                {
-                case 1:
-                    poner_valor(reglas, error);
-                    break;
-                case 2:
-                    quitar_valor(reglas, error);
-                    break;
-                case 3:
-                    reglas.reset();
-                    break;
-                case 4:
-                    posibles_valores(reglas, error);
-                    pausar();
-                    break;
-                case 5:
-                    reglas.autocompletar();
-                    break;
-                default:
-                    error = opciones;
-                    break;
-                }
-                opcion = mostrar_sudoku(reglas, error);
-            }
-        } else cout << BG_RED << "La dimension de la matriz propuesta es mayor a la admitida." << RESET;
-    } else cout << BG_RED << "Ha habido un problema al cargar el archivo" << RESET;
-
+    comenzar_partida(archivo);
     return 0;
 }
 
@@ -283,4 +269,123 @@ void pausar()
     cout << "\nPresiona Enter para continuar...";
     cin.ignore();
     cin.get();
+}
+
+char start_menu()
+{
+    char opcion;
+    bool opcion_valida = false;
+
+    cout << "Bienvenido, elije una de las siguientes opciones para continuar: " << endl;
+    cout << "Partida nueva (N) | Continuar partida (C) | Abandonar la aplicacion (A)" << endl;
+
+    while (!opcion_valida)
+    {
+        cin >> opcion;
+
+        opcion_valida = (opcion == 'A' || opcion == 'C' || opcion == 'N');
+
+        if(!opcion_valida){
+            cout << """Opcion no valida | Debes introducir 'N' , 'C' o 'A' """ << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(),'\n');
+        }
+    }
+    
+    return opcion;
+}
+
+void new_game(ListaSudoku& listado){
+    ifstream archivo("lista_sudokus.txt");
+
+    int num_sudokus;
+    
+    archivo >> num_sudokus;
+
+    for (int i = 0; i < num_sudokus; i++)
+    {
+        string string_sudoku;
+        
+        archivo >> string_sudoku;
+        ifstream archivo_sudoku(string_sudoku);
+        if (archivo_sudoku.is_open())
+        {
+            tReglasSudoku regla;
+            regla.carga_sudoku(archivo_sudoku);
+
+            listado.insertar(regla);
+
+            archivo_sudoku.close();
+        }
+        
+    }
+    
+}
+
+void continuar(){
+    ifstream archivo("lista_partidas.txt");
+
+    if (archivo.is_open())
+    {
+        int num_partidas;
+    
+        archivo >> num_partidas;
+
+        for (int i = 0; i < num_partidas; i++)
+        {
+            tReglasSudoku sudoku_actual;
+
+
+            bool carga = sudoku_actual.carga_sudoku(archivo);
+
+            if(carga){
+                
+            }
+        }
+        
+    }
+}
+
+void comenzar_partida(ifstream &archivo){
+
+    tReglasSudoku reglas;
+
+    tError error = ninguno;
+
+    if (archivo.is_open())
+    {
+        if(reglas.carga_sudoku(archivo)){
+
+
+            int opcion = mostrar_sudoku(reglas, error);
+            while (opcion != 6)
+            {
+                error = ninguno;
+                switch (opcion)
+                {
+                case 1:
+                    poner_valor(reglas, error);
+                    break;
+                case 2:
+                    quitar_valor(reglas, error);
+                    break;
+                case 3:
+                    reglas.reset();
+                    break;
+                case 4:
+                    posibles_valores(reglas, error);
+                    pausar();
+                    break;
+                case 5:
+                    reglas.autocompletar();
+                    break;
+                default:
+                    error = opciones;
+                    break;
+                }
+                opcion = mostrar_sudoku(reglas, error);
+            }
+        } else cout << BG_RED << "La dimension de la matriz propuesta es mayor a la admitida." << RESET;
+    } else cout << BG_RED << "Ha habido un problema al cargar el archivo" << RESET;
+
 }
