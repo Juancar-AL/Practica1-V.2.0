@@ -1,7 +1,7 @@
 #pragma once
 
 #include <fstream>
-#include "tablero.h"
+#include "../modelo/tablero.h"
 
 using namespace std;
 
