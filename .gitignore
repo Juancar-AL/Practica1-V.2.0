@@ -6,6 +6,7 @@
 # Archivos objeto generados durante la compilación
 *.o
 *.obj
+*.pdf
 
 # Carpetas de configuración locales de los editores de código
 .vscode/

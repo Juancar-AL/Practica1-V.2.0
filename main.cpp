@@ -10,6 +10,16 @@ using namespace std;
 void continuar();
 void new_game(ListaSudoku& listado);
 
+/*TODO-LIST
+
+Funcón para la lectura de partidas sin terminar
+Revisar función para inicio de un juego nuevo
+Funcón que imprima por pantalla el número de celdas con 1 valor posible, 2...
+
+Revisar lógica para el cambio de partida
+*/
+
+
 int main()
 {
     ListaSudoku lista;
@@ -28,14 +38,14 @@ int main()
     }
 
 
-    ifstream archivo("sudoku_1.txt");
+    ifstream archivo("sudokus/sudoku_1.txt");
 
     comenzar_partida(archivo);
     return 0;
 }
 
 void new_game(ListaSudoku& listado){
-    ifstream archivo("lista_sudokus.txt");
+    ifstream archivo("log_fules/lista_sudokus.txt");
 
     int num_sudokus;
     
@@ -62,7 +72,7 @@ void new_game(ListaSudoku& listado){
 }
 
 void continuar(){
-    ifstream archivo("lista_partidas.txt");
+    ifstream archivo("log_files/lista_partidas.txt");
 
     if (archivo.is_open())
     {
