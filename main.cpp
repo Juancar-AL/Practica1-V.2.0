@@ -1,20 +1,20 @@
 #include <fstream>
+#include <iostream>
 #include <string>
-
-#include "logica/lista_sudoku.h"
 
 #include "ui/interfaz.h"
 
 using namespace std;
 
-void continuar();
-void new_game(ListaSudoku& listado);
+const int SALIR = 0;
+
+int new_game(ListaSudoku& listado);
+int continuar(ListaSudoku& listado);
 
 /*TODO-LIST
 
 Funcón para la lectura de partidas sin terminar
 Revisar función para inicio de un juego nuevo
-Funcón que imprima por pantalla el número de celdas con 1 valor posible, 2...
 
 Revisar lógica para el cambio de partida
 */
@@ -24,28 +24,36 @@ int main()
 {
     ListaSudoku lista;
 
-    char opcion = start_menu();
+    int sudoku = -1;
 
-    switch (opcion)
+    cout << "Bienvenido, elije una de las siguientes opciones para continuar: " << endl;
+
+    while (sudoku < 0)
     {
-    case 'N':
-        new_game(lista);
-        break;
-    case 'C':
+        char opcion = start_menu();
 
-    default:
-        break;
+        switch (opcion)
+        {
+        case 'N':
+            sudoku = new_game(lista);
+            break;
+        case 'C':
+            sudoku = continuar(lista);
+            break;
+        case 'A':
+            sudoku = SALIR;
+            break;
+        }
     }
 
-
-    ifstream archivo("sudokus/sudoku_1.txt");
-
-    comenzar_partida(archivo);
+    if(sudoku > 0){
+        comenzar_partida(lista.dame_sudoku(sudoku - 1));
+    }
     return 0;
 }
 
-void new_game(ListaSudoku& listado){
-    ifstream archivo("log_fules/lista_sudokus.txt");
+int new_game(ListaSudoku& listado){
+    ifstream archivo("log_files/lista_sudokus.txt");
 
     int num_sudokus;
     
@@ -56,7 +64,7 @@ void new_game(ListaSudoku& listado){
         string string_sudoku;
         
         archivo >> string_sudoku;
-        ifstream archivo_sudoku(string_sudoku);
+        ifstream archivo_sudoku("sudokus/" + string_sudoku);
         if (archivo_sudoku.is_open())
         {
             tReglasSudoku regla;
@@ -66,13 +74,30 @@ void new_game(ListaSudoku& listado){
 
             archivo_sudoku.close();
         }
+        else
+        {
+            cout << "No se pudo abrir sudokus/" << string_sudoku << '\n';
+        }
         
     }
+
+    for (int i = 0; i < listado.dame_num_elems(); i++)
+    {
+        cout << i + 1 << ": ";
+        leer_casillas_sudoku(listado.dame_sudoku(i));
+    }
+
+    int sudoku;
+    cout << "Elije un sudoku (1 - " << listado.dame_num_elems() << ") : ";
+    cin >> sudoku;
+
+    return sudoku;
     
 }
 
-void continuar(){
+int continuar(ListaSudoku& listado){
     ifstream archivo("log_files/lista_partidas.txt");
+    int sudoku = -1;
 
     if (archivo.is_open())
     {
@@ -80,17 +105,50 @@ void continuar(){
     
         archivo >> num_partidas;
 
-        for (int i = 0; i < num_partidas; i++)
-        {
-            tReglasSudoku sudoku_actual;
+        if(num_partidas>0){
+            for (int i = 0; i < num_partidas; i++)
+            {
+                tReglasSudoku reglas;
 
+                bool carga = reglas.carga_sudoku(archivo);
 
-            bool carga = sudoku_actual.carga_sudoku(archivo);
+                if(carga){
+                    int fila = 0;
+                    
+                    while (fila != -1)
+                    {
+                        archivo >> fila;
+                        
+                        if (fila != -1)
+                        {
+                            int columna, valor;
+                            archivo >> columna >> valor;
+                            reglas.pon_valor(fila, columna, valor);
+                        }
+                    }
 
-            if(carga){
-
+                    listado.insertar(reglas);
+                }
             }
+            
+            archivo.close();
+
+            for (int i = 0; i < listado.dame_num_elems(); i++)
+            {
+                cout << i + 1 << ": ";
+                leer_casillas_sudoku(listado.dame_sudoku(i));
+            }
+
+            cout << "Elije un sudoku (1 - " << listado.dame_num_elems() << ") : ";
+            cin >> sudoku;
+        } else{
+            cout << "No hay partidas guardadas" << endl;
         }
-        
     }
+    else
+    {
+        cout << "No se pudo abrir log_files/lista_partidas.txt\n";
+    }
+
+    return sudoku;
 }

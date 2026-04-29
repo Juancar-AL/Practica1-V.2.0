@@ -25,7 +25,7 @@ public:
     ListaSudoku();
     ~ListaSudoku();
 
-    int dame_num_elems();
+    int dame_num_elems() const;
     const tReglasSudoku& dame_sudoku(const int& i);
     void insertar(const tReglasSudoku& sudoku);
     void eliminar(const int& pos); // elimina el elemento de la posición pos
