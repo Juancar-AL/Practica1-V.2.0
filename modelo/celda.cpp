@@ -1,53 +1,51 @@
 #include "celda.h"
 
-tCelda::tCelda()
-{
+// ==================== CONSTRUCTORES ====================
+
+tCelda::tCelda() {
     valor = 0;
     estadoActual = vacia;
 }
 
-void tCelda::Celda(int v, tEstado estado)
-{
-    valor = v;
-    estadoActual = estado;
-}
+// ==================== MÉTODOS CONSULTORES ====================
 
-bool tCelda::es_vacia()  const
-{
+bool tCelda::es_vacia() const {
     return estadoActual == vacia;
 }
 
-bool tCelda::es_original()  const
-{
+bool tCelda::es_original() const {
     return estadoActual == original;
 }
 
-bool tCelda::es_ocupada()  const
-{
+bool tCelda::es_ocupada() const {
     return estadoActual == ocupada;
 }
 
-int tCelda::dame_valor()  const
-{
+int tCelda::dame_valor() const {
     return valor;
 }
 
-void tCelda::set_valor(int v)
-{
+// ==================== MÉTODOS MODIFICADORES ====================
+
+void tCelda::set_valor(int v) {
     valor = v;
 }
 
-void tCelda::set_ocupada()
-{
+void tCelda::set_ocupada() {
     estadoActual = ocupada;
 }
 
-void tCelda::set_original()
-{
+void tCelda::set_original() {
     estadoActual = original;
 }
 
-void tCelda::set_vacia()
-{
+void tCelda::set_vacia() {
     estadoActual = vacia;
+}
+
+// ==================== MÉTODOS PRIVADOS ====================
+
+void tCelda::Celda(int v, tEstado estado) {
+    valor = v;
+    estadoActual = estado;
 }

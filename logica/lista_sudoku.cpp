@@ -1,6 +1,8 @@
 #include "lista_sudoku.h"
 
 
+// ==================== CONSTRUCTORES Y DESTRUCTORES ====================
+
 ListaSudoku::ListaSudoku() : size(0) , cap(0), lista_sudokus(nullptr) {}
 
 ListaSudoku::~ListaSudoku()
@@ -38,12 +40,16 @@ ListaSudoku::ListaSudoku(const ListaSudoku& lista){
 }
 
 
+// ==================== MÉTODOS CONSULTORES ====================
 
 int ListaSudoku::dame_num_elems() const {return size;}
 
 const tReglasSudoku& ListaSudoku::dame_sudoku(const int& i){
     return *lista_sudokus[i];
 }
+
+
+// ==================== MÉTODOS MODIFICADORES ====================
 
 void ListaSudoku::insertar(const tReglasSudoku& sudoku){
     if(size == cap){
@@ -92,11 +98,14 @@ void ListaSudoku::eliminar(const int& pos){
     
 } // elimina el elemento de la posición pos
 
-tReglasSudoku& ListaSudoku::operator[](int indice) {
+
+// ==================== OPERADORES ====================
+
+const tReglasSudoku& ListaSudoku::operator[](int indice) const{
     return *lista_sudokus[indice];
 }
 
-const tReglasSudoku& ListaSudoku::operator[](int indice) const{
+tReglasSudoku& ListaSudoku::operator[](int indice) {
     return *lista_sudokus[indice];
 }
 

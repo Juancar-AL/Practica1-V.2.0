@@ -1,3 +1,5 @@
+// ==================== HEADERS E INCLUDES ====================
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -6,13 +8,15 @@
 
 using namespace std;
 
+
+// ==================== DECLARACIONES DE ESTRUCTURA ====================
+
+// tInfoSeleccion está definida en interfaz.h
+
 const int SALIR = 0;
 
-typedef struct {
-    tReglasSudoku sudoku; // El objeto sudoku listo para jugar
-    int indice;           // Su posición en la lista (para borrar/actualizar después)
-    char tipo;            // 'N' para Nuevo, 'C' para Continuar, 'S' para Salir
-} tInfoSeleccion;
+
+// ==================== DECLARACIONES FORWARD ====================
 
 bool cargar_partidas(ListaSudoku& listado);
 void guardar_partidas(ListaSudoku& lista);
@@ -20,6 +24,9 @@ void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas);
 bool cargar_lista_nuevos(ListaSudoku& listado);
 void actualizar_listas(ListaSudoku& lista_partidas, const tInfoSeleccion& sel, bool completado);
 tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& lista_partidas);
+
+
+// ==================== FUNCION MAIN ====================
 
 int main()
 {
@@ -54,6 +61,9 @@ int main()
     return 0;
 }
 
+
+// ==================== FUNCIONES DE MENU ====================
+
 void actualizar_listas(ListaSudoku& lista_partidas, const tInfoSeleccion& sel, bool completado) {
     if (!completado) {
         // Si no terminó, guardamos o actualizamos el progreso
@@ -67,7 +77,7 @@ void actualizar_listas(ListaSudoku& lista_partidas, const tInfoSeleccion& sel, b
     } else {
         // Si completó una partida que ya estaba en "Continuar", la borramos
         if (sel.tipo == 'C') {
-            cout << "¡Felicidades! Has completado el sudoku. Se eliminara de tu lista de partidas." << endl;
+            cout << endl << "Has completado el sudoku. Se eliminara de tu lista de partidas." << endl;
             lista_partidas.eliminar(sel.indice);
         }
     }
@@ -106,6 +116,10 @@ tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& l
     }
     return seleccion;
 }
+
+
+// ==================== FUNCIONES DE CARGA DE DATOS ====================
+
 bool cargar_lista_nuevos(ListaSudoku& listado){
     bool cargado = false;
     ifstream archivo("log_files/lista_sudokus.txt");
@@ -197,6 +211,9 @@ bool cargar_partidas(ListaSudoku& listado){
     return carga_ok;
 }
 
+
+// ==================== FUNCIONES DE SERIALIZACION ====================
+
 void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas)
 {
     tReglasSudoku original   = reglas;
@@ -229,6 +246,9 @@ void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas)
 
     archivo << -1 << endl;
 }
+
+
+// ==================== FUNCIONES DE GUARDADO ====================
 
 void guardar_partidas(ListaSudoku& lista)
 {

@@ -13,6 +13,35 @@
 using namespace std;
 
 
+// ==================== FUNCIONES DE MENÚ ====================
+
+char start_menu()
+{
+    char opcion;
+    bool opcion_valida = false;
+
+    cout << "Partida nueva (N) | Continuar partida (C) | Abandonar la aplicacion (A)" << endl;
+
+    while (!opcion_valida)
+    {
+        cin >> opcion;
+
+        opcion_valida = (opcion == 'A' || opcion == 'C' || opcion == 'N');
+
+        if (!opcion_valida)
+        {
+            cout << "Opcion no valida | Debes introducir 'N' , 'C' o 'A'" << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+
+    return opcion;
+}
+
+
+// ==================== FUNCIONES DE VISUALIZACIÓN ====================
+
 void mostrar_sudoku(const tReglasSudoku& reglas){
     
     const int LINEA_HORIZONTAL = 196;
@@ -26,7 +55,7 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
         dim_submatriz = 1;
 
     cout << endl
-         << CYAN << "================ SUDOKU ================" << RESET << '\n';
+         << CYAN << "================ SUDOKU ================" << RESET << endl;
 
     // Cabecera de columnas
     cout << "    ";
@@ -79,6 +108,36 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
     }
 }
 
+void mostrar_lista(const ListaSudoku& lista){
+    for (int i = 0; i < lista.dame_num_elems(); i++)
+    {
+        cout << i + 1 << ": ";
+
+        cout << "Sudoku con " << lista[i].dame_num_celdas_vacias() << " celdas vacias" << '\n';
+        for (int j = 1; j <= lista[i].dame_dimension(); j++)
+        {
+            cout << "\tCeldas con " << j << " valores posibles: " << lista[i].cuantas_celdas_pueden_tener(j) << '\n';
+        }
+    }
+    
+}
+
+void mostrar_bloqueos(const tReglasSudoku& reglas){
+    int f, c;
+    cout << "Celdas bloqueadas: ";
+    for (int i = 0; i < reglas.dame_num_celdas_bloqueadas(); i++)
+    {
+        reglas.dame_celda_bloqueada(i, f, c);
+        cout << "(" << f << ", " << c << ")" << ", ";
+    }
+    cout << endl;
+    pausar();
+
+}
+
+
+// ==================== FUNCIONES DE SELECCIÓN ====================
+
 int submenu_sudoku(const ListaSudoku& listado) {
     int indice_resultado = -1;
     bool terminado = false;
@@ -114,7 +173,6 @@ int submenu_sudoku(const ListaSudoku& listado) {
     return indice_resultado;
 }
 
-// Devuelve true si el usuario decidió JUGAR este sudoku
 bool gestionar_seleccion(const tReglasSudoku& sudoku) {
     char opcion = ' ';
     while (opcion != '2' && opcion != '3') {
@@ -129,74 +187,8 @@ bool gestionar_seleccion(const tReglasSudoku& sudoku) {
     return (opcion == '2'); // Retorna true solo si eligió jugar
 }
 
-string traducir_error(tError error) {
-    string texto = "";
-    switch (error) {
-        case opciones:  texto = "OPCION INCORRECTA"; break;
-        case valor:     texto = "VALOR INCORRECTO"; break;
-        case bloqueada: texto = "CELDA BLOQUEADA!"; break;
-        case original:  texto = "CELDA ORIGINAL"; break;
-        case vacia:     texto = "CELDA VACIA"; break;
-        case ocupada:   texto = "CELDA OCUPADA"; break;
-        default:        texto = ""; break;
-    }
-    return texto;
-}
 
-int menu_sudoku(const tReglasSudoku &reglas, const tError error)
-{
-    int opcion = -1;
-    string error_texto;
-
-    mostrar_sudoku(reglas);
-
-    if (!reglas.terminado())
-    {
-        cout << '\n';
-        cout << YELLOW << "------------- MENU -------------" << RESET << '\n';
-        cout << "1. Poner valor\n";
-        cout << "2. Quitar valor\n";
-        cout << "3. Reset\n";
-        cout << "4. Posibles valores de una celda vacia\n";
-        cout << "5. Autocompletar celdas con valor unico\n";
-        cout << "6. Resolver el sudoku\n";
-        cout << "7. Salir\n";
-        cout << YELLOW << "--------------------------------" << RESET << '\n';
-        
-        error_texto = traducir_error(error);
-        
-        cout << BG_RED << error_texto << RESET << endl;
-
-        if (error == bloqueada)
-        {
-            mostrar_bloqueos(reglas);
-        }
-        
-        cout << "Opcion: ";
-
-        cin >> opcion;
-    }
-    else
-    {
-        cout << HK_PINK_PASTEL << "=========== SUDOKU TERMINADO ===========" << RESET;
-        opcion = 7;
-    }
-
-    return opcion;
-}
-
-void mostrar_bloqueos(const tReglasSudoku& reglas){
-    int f, c;
-    cout << "Celdas bloqueadas: ";
-    for (int i = 0; i < reglas.dame_num_celdas_bloqueadas(); i++)
-    {
-        reglas.dame_celda_bloqueada(i, f, c);
-        cout << "(" << f << ", " << c << ")" << ", ";
-    }
-    cout << endl;
-    pausar();
-
-}
+// ==================== FUNCIONES DE ENTRADA/MODIFICACIÓN ====================
 
 void poner_valor(tReglasSudoku &reglas, tError &error)
 {
@@ -283,36 +275,8 @@ int posibles_valores(tReglasSudoku &reglas, tError &error)
     return cantidad;
 }
 
-void pausar()
-{
-    cout << "\nPresiona Enter para continuar...";
-    cin.ignore();
-    cin.get();
-}
 
-char start_menu()
-{
-    char opcion;
-    bool opcion_valida = false;
-
-    cout << "Partida nueva (N) | Continuar partida (C) | Abandonar la aplicacion (A)" << endl;
-
-    while (!opcion_valida)
-    {
-        cin >> opcion;
-
-        opcion_valida = (opcion == 'A' || opcion == 'C' || opcion == 'N');
-
-        if (!opcion_valida)
-        {
-            cout << "Opcion no valida | Debes introducir 'N' , 'C' o 'A'" << endl;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        }
-    }
-
-    return opcion;
-}
+// ==================== FUNCIONES DE JUEGO ====================
 
 bool comenzar_partida(tReglasSudoku &reglas)
 {
@@ -360,6 +324,48 @@ bool comenzar_partida(tReglasSudoku &reglas)
     return reglas.terminado();
 }
 
+int menu_sudoku(const tReglasSudoku &reglas, const tError error)
+{
+    int opcion = -1;
+    string error_texto;
+
+    mostrar_sudoku(reglas);
+
+    if (!reglas.terminado())
+    {
+        cout << '\n';
+        cout << YELLOW << "------------- MENU -------------" << RESET << '\n';
+        cout << "1. Poner valor\n";
+        cout << "2. Quitar valor\n";
+        cout << "3. Reset\n";
+        cout << "4. Posibles valores de una celda vacia\n";
+        cout << "5. Autocompletar celdas con valor unico\n";
+        cout << "6. Resolver el sudoku\n";
+        cout << "7. Salir\n";
+        cout << YELLOW << "--------------------------------" << RESET << '\n';
+        
+        error_texto = traducir_error(error);
+        
+        cout << BG_RED << error_texto << RESET << endl;
+
+        if (error == bloqueada)
+        {
+            mostrar_bloqueos(reglas);
+        }
+        
+        cout << "Opcion: ";
+
+        cin >> opcion;
+    }
+    else
+    {
+        cout << HK_PINK_PASTEL << "=========== SUDOKU TERMINADO ===========" << RESET;
+        opcion = 7;
+    }
+
+    return opcion;
+}
+
 bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna){
 
 
@@ -403,16 +409,26 @@ bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna){
     return resuelto;
 }
 
-void mostrar_lista(const ListaSudoku& lista){
-    for (int i = 0; i < lista.dame_num_elems(); i++)
-    {
-        cout << i + 1 << ": ";
 
-        cout << "Sudoku con " << lista[i].dame_num_celdas_vacias() << " celdas vacias" << '\n';
-        for (int j = 1; j <= lista[i].dame_dimension(); j++)
-        {
-            cout << "\tCeldas con " << j << " valores posibles: " << lista[i].cuantas_celdas_pueden_tener(j) << '\n';
-        }
+// ==================== FUNCIONES AUXILIARES ====================
+
+void pausar()
+{
+    cout << "\nPresiona Enter para continuar...";
+    cin.ignore();
+    cin.get();
+}
+
+string traducir_error(tError error) {
+    string texto = "";
+    switch (error) {
+        case opciones:  texto = "OPCION INCORRECTA"; break;
+        case valor:     texto = "VALOR INCORRECTO"; break;
+        case bloqueada: texto = "CELDA BLOQUEADA!"; break;
+        case original:  texto = "CELDA ORIGINAL"; break;
+        case vacia:     texto = "CELDA VACIA"; break;
+        case ocupada:   texto = "CELDA OCUPADA"; break;
+        default:        texto = ""; break;
     }
-    
+    return texto;
 }
