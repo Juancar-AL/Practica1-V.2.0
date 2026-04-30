@@ -80,6 +80,51 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
     }
 }
 
+int submenu_sudoku(ListaSudoku& listado){
+    int sudoku = -1;
+    
+    while (sudoku == -1)
+    {
+        mostrar_lista(listado);
+
+        int seleccion;
+        cout << "Elije un sudoku (1 - " << listado.dame_num_elems() << ") : ";
+        cin >> seleccion;
+
+        // Menú para ver o jugar el sudoku seleccionado
+        bool opcion_confirmada = false;
+        while (!opcion_confirmada)
+        {
+            cout << "1. Ver sudoku" << endl;
+            cout << "2. Jugar sudoku" << endl;
+            cout << "3. Volver a la lista" << endl;
+            cout << "Opcion: ";
+            char opcion;
+            cin >> opcion;
+
+            switch (opcion)
+            {
+            case '1':
+                cout << "\nSudoku seleccionado:" << endl;
+                mostrar_sudoku(listado.dame_sudoku(seleccion - 1));
+                break;
+            case '2':
+                sudoku = seleccion;
+                opcion_confirmada = true;
+                break;
+            case '3':
+                cout << "\n";
+                opcion_confirmada = true;
+                break;
+            default:
+                cout << "Opcion no valida. Intenta de nuevo." << endl;
+            }
+        }
+    }
+
+    return sudoku;
+}
+
 
 int menu_sudoku(const tReglasSudoku &reglas, const tError error)
 {
@@ -96,8 +141,9 @@ int menu_sudoku(const tReglasSudoku &reglas, const tError error)
         cout << "2. Quitar valor\n";
         cout << "3. Reset\n";
         cout << "4. Posibles valores de una celda vacia\n";
-        cout << "5. Autocompletar\n";
-        cout << "6. Salir\n";
+        cout << "5. Autocompletar celdas con valor unico\n";
+        cout << "6. Resolver el sudoku\n";
+        cout << "7. Salir\n";
         cout << YELLOW << "--------------------------------" << RESET << '\n';
         switch (error)
         {
@@ -142,7 +188,7 @@ int menu_sudoku(const tReglasSudoku &reglas, const tError error)
     else
     {
         cout << HK_PINK_PASTEL << "=========== SUDOKU TERMINADO ===========" << RESET;
-        opcion = 6;
+        opcion = 7;
     }
 
     return opcion;
@@ -264,78 +310,100 @@ char start_menu()
     return opcion;
 }
 
-void comenzar_partida(const tReglasSudoku &reglas)
+bool comenzar_partida(tReglasSudoku &reglas)
 {
     bool guardada = false;
-    tReglasSudoku sudoku_copia = reglas;
     tError error = ninguno;
 
-    int opcion = menu_sudoku(sudoku_copia, error);
-    while (opcion != 6)
+    int opcion = menu_sudoku(reglas, error);
+    while (opcion != 7)
     {
         error = ninguno;
         switch (opcion)
         {
         case 1:
-            poner_valor(sudoku_copia, error);
+            poner_valor(reglas, error);
             break;
         case 2:
-            quitar_valor(sudoku_copia, error);
+            quitar_valor(reglas, error);
             break;
         case 3:
-            sudoku_copia.reset();
+            reglas.reset();
             break;
         case 4:
-            posibles_valores(sudoku_copia, error);
+            posibles_valores(reglas, error);
             pausar();
             break;
         case 5:
-            sudoku_copia.autocompletar();
+            reglas.autocompletar();
+            break;
+        case 6:
+           cout << resolver_sudoku(reglas, 0,0) << endl;
             break;
         default:
             error = opciones;
             break;
         }
-        opcion = menu_sudoku(sudoku_copia, error);
-    }
+        opcion = menu_sudoku(reglas, error);
+    } 
 
-    if(!guardada){
-        char guardar;
-        cout << "¡Espera! No has guardado tu partida. ¿Quieres guardar tu progreso? (S/N)" << endl;
-        pausar();
-        while (guardar != 'S' || guardar != 'N')
-        {
-            cin >> guardar;
-        }
-    }    
+    return reglas.terminado();
 }
 
-void leer_casillas_sudoku(const tReglasSudoku& reglas){
-    int posibles[MAX] = {0};
-    int num_celdas_vacias = 0;
+bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna){
 
-    for (int i = 0; i < reglas.dame_dimension(); i++)
-    {
-        for (int j = 0; j < reglas.dame_dimension(); j++)
-        {
-            if (reglas.dame_celda(i,j) == 0)
-            {
-                num_celdas_vacias++;
-                int posibles_valores = reglas.posibles_valores(i,j);
-                if (posibles_valores >= 1 && posibles_valores <= MAX)
-                {
-                    posibles[posibles_valores - 1]++;
+
+    bool resuelto = false;
+    int dimension = sudoku.dame_dimension(); // Usamos la dimensión de tu clase
+
+    
+    // 1. CASO BASE: Si llegamos a la fila final, terminamos
+    if (fila == dimension) {
+        resuelto = true;
+    } 
+    // 2. SALTO DE LÍNEA: Si nos salimos por la derecha, pasamos a la siguiente fila
+    else if (columna == dimension) {
+        resuelto = resolver_sudoku(sudoku, fila + 1, 0);
+    } 
+    // 3. CELDA OCUPADA: Avanzamos a la siguiente celda
+    else if (sudoku.dame_celda(fila, columna) != 0) {
+        resuelto = resolver_sudoku(sudoku, fila, columna + 1);
+    } 
+    // 4. CELDA VACÍA: 
+    else {
+        // Asumimos que los valores del Sudoku van de 1 a la dimensión (ej. 1 al 9)
+        for (int i = 1; i <= dimension && !resuelto; i++) {
+            
+            // Si el número es válido según las reglas...
+            if (sudoku.es_valor_posible(fila, columna, i)) {
+                
+                sudoku.pon_valor(fila, columna, i); // Lo ponemos
+                
+                // Intentamos resolver el resto del tablero
+                resuelto = resolver_sudoku(sudoku, fila, columna + 1);
+                
+                // BACKTRACKING: Si este camino nos llevó a un callejón sin salida...
+                if (!resuelto) {
+                    sudoku.quita_valor(fila,columna);// Lo volvemos a dejar vacío (0)
+                } else{
                 }
             }
-            
         }
-        
     }
 
-    cout << "Sudoku con " << num_celdas_vacias << " celdas vacias" << '\n';
-    for (int i = 1; i <= reglas.dame_dimension(); i++)
+    return resuelto;
+}
+
+void mostrar_lista(const ListaSudoku& lista){
+    for (int i = 0; i < lista.dame_num_elems(); i++)
     {
-        cout << "\tCeldas con " << i << " valores posibles: " << posibles[i - 1] << '\n';
+        cout << i + 1 << ": ";
+
+        cout << "Sudoku con " << lista[i].dame_num_celdas_vacias() << " celdas vacias" << '\n';
+        for (int j = 1; j <= lista[i].dame_dimension(); j++)
+        {
+            cout << "\tCeldas con " << j << " valores posibles: " << lista[i].cuantas_celdas_pueden_tener(j) << '\n';
+        }
     }
     
 }

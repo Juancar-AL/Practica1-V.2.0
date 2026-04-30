@@ -9,15 +9,26 @@ using namespace std;
 class tReglasSudoku{
     private:
 
+    typedef struct
+    {
+        int fila;
+        int columna;
+    }tPosicion;
+    
+
     typedef struct{
-        int lista[MAX*MAX][2];
+        tPosicion** lista;
         int cont;
+        int cap;
     } tListaBloqueos;
 
 
     tTablero tablero;
     int cont;
     tListaBloqueos lista;
+
+    typedef int arrValores[MAX];
+    arrValores cuantas_celdas;
 
     bool coord_valid(const int& f, const int& c) const;
     void actualizar_bloqueos();
@@ -29,7 +40,7 @@ class tReglasSudoku{
 
     void quitar_posible(const int& f, const int& c, const int val);
 
-
+    void recalcular_cuantas_celdas();
 
     //Actualización
 
@@ -46,6 +57,8 @@ class tReglasSudoku{
 
     public:
     tReglasSudoku();
+    tReglasSudoku(const tReglasSudoku& otro);  // constructor por copia
+    ~tReglasSudoku();
     int dame_dimension() const; // devuelve la dimensión del tablero
     int dame_celda(int f, int c) const; // devuelve la celda en la posición (f,c)
     bool terminado() const; // true si y sólo si el Sudoku está resuelto
@@ -61,7 +74,14 @@ class tReglasSudoku{
     void reset(); // recupera el Sudoku original
     void autocompletar(); // rellena todas las celdas con un único valor posible
     /* inicializadora */
-    bool carga_sudoku(ifstream&); // carga un Sudoku original de un archiv
+    bool carga_sudoku(ifstream&); // carga un Sudoku original de un archivo
 
-    /*Otros métdos privados*/
+    tReglasSudoku& operator=(const tReglasSudoku& otro);  // operador de asignación
+
+    int cuantas_celdas_pueden_tener(int n_valores) const;
+
+    bool operator<(const tReglasSudoku& s2) const;
+    bool operator==(const tReglasSudoku& s2) const;
+
+    /*Otros métdos públicos*/
 }; 

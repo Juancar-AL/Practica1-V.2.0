@@ -8,10 +8,51 @@ tReglasSudoku::tReglasSudoku() //Constructora básica sin argumentos, incializam
 {
     cont = 0;
     lista.cont = 0;
+    lista.cap = 0;
+    lista.lista = nullptr;
     valores_celda.nFilas = 0;
     valores_celda.nColumnas = 0;
 
+    for (int i = 0; i < MAX; i++) {
+        cuantas_celdas[i] = 0;
+    }
+
     ini_matriz3D();
+}
+
+tReglasSudoku::tReglasSudoku(const tReglasSudoku& otro) {
+    cont = otro.cont;
+    tablero = otro.tablero;
+    valores_celda = otro.valores_celda;
+    
+    lista.cont = otro.lista.cont;
+    lista.cap = otro.lista.cap;
+    
+    if (otro.lista.cap > 0) {
+        lista.lista = new tPosicion*[otro.lista.cap];
+        for (int i = 0; i < otro.lista.cont; i++) {
+            lista.lista[i] = new tPosicion{otro.lista.lista[i]->fila, otro.lista.lista[i]->columna};
+        }
+    } else {
+        lista.lista = nullptr;
+    }
+
+    for (int i = 0; i < MAX; i++) {
+        cuantas_celdas[i] = otro.cuantas_celdas[i];
+    }
+}
+
+
+tReglasSudoku::~tReglasSudoku(){
+    for (int i = 0; i < lista.cont; i++)
+    {
+        delete lista.lista[i];
+        lista.lista[i] = nullptr;
+    }
+
+    delete[] lista.lista;
+    lista.lista = nullptr;
+    
 }
 
 int tReglasSudoku::dame_dimension() const
@@ -48,8 +89,8 @@ void tReglasSudoku::dame_celda_bloqueada(int p, int &f, int &c) const
 {
     if (p >= 0 && p < lista.cont) //Comrpobamos que la posición esté dentro de los márgenes
     {
-        f = lista.lista[p][0]; //Añadimos en la lista la fila y columna del bloqueo
-        c = lista.lista[p][1];
+        f = lista.lista[p]->fila; //Añadimos en la lista la fila y columna del bloqueo
+        c = lista.lista[p]->columna;
     }
     else
     { //Si la posicion no es válida retornamos por valor -1;
@@ -72,12 +113,22 @@ void tReglasSudoku::actualizar_bloqueos(){
         {
             if (tablero.dame_elem(i, j).es_vacia() && posibles_valores(i, j) == 0)
             {
-                if (lista.cont < MAX * MAX)
+                if (lista.cont == lista.cap)
                 {
-                    lista.lista[lista.cont][0] = i;
-                    lista.lista[lista.cont][1] = j;
-                    lista.cont++;
+                    int newCap = (lista.cap == 0) ? 1 : lista.cap *2;
+                    tPosicion ** nuevo = new tPosicion*[newCap];
+                    for (int k = 0; k < lista.cont; k++)
+                    {
+                        nuevo[k] = lista.lista[k];
+                    }
+
+                    delete[] lista.lista;
+                    lista.lista = nuevo;
+                    lista.cap = newCap;
                 }
+
+                lista.lista[lista.cont] = new tPosicion{i, j};
+                lista.cont++;
             }
         }
     }
@@ -147,6 +198,8 @@ void tReglasSudoku::autocompletar()
             }
         }
     }
+
+    recalcular_cuantas_celdas();
 }
 
 bool tReglasSudoku::pon_valor(int f, int c, int v)
@@ -163,6 +216,8 @@ bool tReglasSudoku::pon_valor(int f, int c, int v)
             cont++;
             actualizar_posibles(f, c, v);
             colocado = true;
+
+            recalcular_cuantas_celdas();
         }
 
     }
@@ -189,11 +244,10 @@ bool tReglasSudoku::quita_valor(int f, int c)
             cont--;
             anadir_posibles(f, c, val);
             quitado = true;
+
+            recalcular_cuantas_celdas();
+            actualizar_bloqueos();
         }
-
-        //Si hemos quitado la celda actualizamos los bloqueos
-        if(quitado) actualizar_bloqueos();
-
     }
 
     return quitado;
@@ -264,6 +318,9 @@ bool tReglasSudoku::carga_sudoku(ifstream &input)
         }
 
         actualizar_bloqueos();
+
+        recalcular_cuantas_celdas();
+        
     }
 
     return cargado;
@@ -393,4 +450,111 @@ void tReglasSudoku::ini_matriz3D(){
             }
         }
     }
+}
+
+tReglasSudoku& tReglasSudoku::operator=(const tReglasSudoku& otro) {
+    if (this != &otro) {
+        // Liberar recursos actuales
+        for (int i = 0; i < lista.cont; i++) {
+            delete lista.lista[i];
+        }
+        delete[] lista.lista;
+        
+        // Copiar datos simples
+        cont = otro.cont;
+        tablero = otro.tablero;
+        valores_celda = otro.valores_celda;
+        
+        // Copiar lista profundamente
+        lista.cont = otro.lista.cont;
+        lista.cap = otro.lista.cap;
+        
+        if (otro.lista.cap > 0) {
+            lista.lista = new tPosicion*[otro.lista.cap];
+            for (int i = 0; i < otro.lista.cont; i++) {
+                lista.lista[i] = new tPosicion{otro.lista.lista[i]->fila, otro.lista.lista[i]->columna};
+            }
+        } else {
+            lista.lista = nullptr;
+        }
+
+        for (int i = 0; i < MAX; i++) {
+            cuantas_celdas[i] = otro.cuantas_celdas[i];
+        }
+    }
+    return *this;
+}
+
+int tReglasSudoku::cuantas_celdas_pueden_tener(int n_valores) const{
+    int cantidad = 0;
+
+    if (n_valores >= 1 && n_valores <= dame_dimension()) {
+        cantidad = cuantas_celdas[n_valores - 1];
+    }
+
+    return cantidad;
+}
+
+void tReglasSudoku::recalcular_cuantas_celdas(){
+    for (int i = 0; i < MAX; i++)
+    {
+        int celdas = 0;
+
+        for (int fila = 0; fila < dame_dimension(); fila++)
+        {
+            for (int columna = 0; columna < dame_dimension(); columna++)
+            {
+                if (dame_celda(fila, columna) == 0)
+                {
+                    if (posibles_valores(fila, columna) == i+1) celdas++;
+                }
+                
+            }
+            
+        }
+
+        cuantas_celdas[i] = celdas;
+
+    }
+}
+
+bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
+    bool resultado = false;
+    bool decidido = false;
+
+    int dim = dame_dimension();
+
+    for (int n = 1; n <= dim && !decidido; n++)
+    {
+        int c1 = cuantas_celdas_pueden_tener(n);
+        int c2 = s2.cuantas_celdas_pueden_tener(n);
+
+        if (c1 != c2)
+        {
+            // Más celdas muy restringidas => sudoku más fácil => "menor".
+            resultado = (c1 > c2);
+            decidido = true;
+        }
+    }
+
+    return resultado;
+}
+bool tReglasSudoku::operator==(const tReglasSudoku& s2) const{
+    bool iguales = true;
+
+    if (dame_dimension() != s2.dame_dimension()) {
+        iguales = false;
+    }
+    else {
+        int dim = dame_dimension();
+
+        for (int n = 1; n <= dim && iguales; n++)
+        {
+            if (cuantas_celdas_pueden_tener(n) != s2.cuantas_celdas_pueden_tener(n)) {
+                iguales = false;
+            }
+        }
+    }
+
+    return iguales;
 }
