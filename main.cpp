@@ -8,18 +8,18 @@ using namespace std;
 
 const int SALIR = 0;
 
-int new_game(ListaSudoku& listado);
-int continuar(ListaSudoku& listado);
+typedef struct {
+    tReglasSudoku sudoku; // El objeto sudoku listo para jugar
+    int indice;           // Su posición en la lista (para borrar/actualizar después)
+    char tipo;            // 'N' para Nuevo, 'C' para Continuar, 'S' para Salir
+} tInfoSeleccion;
+
 bool cargar_partidas(ListaSudoku& listado);
-void guardar_partida(ListaSudoku& lista, int pos);
 void guardar_partidas(ListaSudoku& lista);
-void serializar_sudoku(ofstream& archivo, ListaSudoku& lista, int pos);
 void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas);
-void guardar_partida(const tReglasSudoku& reglas);
-void guardar_partida(ListaSudoku& lista, int pos);
 bool cargar_lista_nuevos(ListaSudoku& listado);
-
-
+void actualizar_listas(ListaSudoku& lista_partidas, const tInfoSeleccion& sel, bool completado);
+tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& lista_partidas);
 
 int main()
 {
@@ -29,110 +29,123 @@ int main()
     cargar_lista_nuevos(lista_nuevos);
     cargar_partidas(lista_partidas);
 
-    int sudoku = -1;
-    char opcion;
+    tInfoSeleccion sel;
+    sel.tipo = ' ';
 
-    cout << "Bienvenido, elije una de las siguientes opciones para continuar: " << endl;
-
-    while (sudoku < 0)
+    while (sel.tipo != 'S')
     {
-        opcion = start_menu();
+        cout << "Bienvenido, elije una de las siguientes opciones para continuar: " << endl;
 
-        switch (opcion)
-        {
-        case 'N':
-            sudoku = submenu_sudoku(lista_nuevos);
-            break;
-        case 'C':
-            sudoku =  submenu_sudoku(lista_partidas);
-            break;
-        case 'A':
-            guardar_partidas(lista_partidas);
-            sudoku = SALIR;
-            break;
+        sel = menu_inicio(lista_nuevos, lista_partidas);
+        
+        if(sel.tipo != 'S'){
+
+            bool completado = comenzar_partida(sel.sudoku);
+            actualizar_listas(lista_partidas, sel, completado);
         }
+
+        cout << "Volviendo al menu principal..." << endl;
     }
 
-    if(sudoku > 0){
-        tReglasSudoku r_sudoku;
+    guardar_partidas(lista_partidas);
 
-        if (opcion == 'N') {
-            r_sudoku = lista_nuevos.dame_sudoku(sudoku - 1);
-        } else {
-            r_sudoku = lista_partidas.dame_sudoku(sudoku - 1);
-        }
-
-        bool completado = comenzar_partida(r_sudoku);
-        
-        if(!completado){
-            if(opcion == 'N') {
-                guardar_partida(r_sudoku);
-            }
-            else if(opcion == 'C'){
-                lista_partidas.eliminar(sudoku-1);
-                lista_partidas.insertar(r_sudoku);
-                guardar_partidas(lista_partidas);
-            }
-
-            cout << "Progreso guardado! Hasta la proxima" << endl;
-        
-        } else {
-            // Sudoku completado
-            if(opcion == 'C'){
-                cout << "¡Felicidades! Has completado el sudoku. Se eliminará de tu lista de partidas." << endl;
-                lista_partidas.eliminar(sudoku-1);
-                guardar_partidas(lista_partidas);
-            }
-        }
-    }
+    cout << "Guardando progreso..." << endl;
 
     return 0;
 }
 
+void actualizar_listas(ListaSudoku& lista_partidas, const tInfoSeleccion& sel, bool completado) {
+    if (!completado) {
+        // Si no terminó, guardamos o actualizamos el progreso
+        if (sel.tipo == 'N') {
+            lista_partidas.insertar(sel.sudoku);
+        } else if (sel.tipo == 'C') {
+            lista_partidas.eliminar(sel.indice); // Usamos el índice guardado
+            lista_partidas.insertar(sel.sudoku);
+        }
+        cout << "Progreso guardado! Hasta la proxima" << endl;
+    } else {
+        // Si completó una partida que ya estaba en "Continuar", la borramos
+        if (sel.tipo == 'C') {
+            cout << "¡Felicidades! Has completado el sudoku. Se eliminara de tu lista de partidas." << endl;
+            lista_partidas.eliminar(sel.indice);
+        }
+    }
+}
+
+
+tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& lista_partidas) {
+    tInfoSeleccion seleccion;
+    seleccion.tipo = ' ';
+    seleccion.indice = -1;
+
+    bool terminado = false;
+    while (!terminado) {
+        char opcion = start_menu(); // Devuelve 'N', 'C' o 'A'
+
+        if (opcion == 'A') {
+            seleccion.tipo = 'S';
+            terminado = true;
+        } else if (opcion == 'N') {
+            int idx = submenu_sudoku(lista_nuevos);
+            if (idx != -1) {
+                seleccion.tipo = 'N';
+                seleccion.indice = idx;
+                seleccion.sudoku = lista_nuevos[idx]; // Copiamos el sudoku elegido
+                terminado = true;
+            }
+        } else if (opcion == 'C') {
+            int idx = submenu_sudoku(lista_partidas);
+            if (idx != -1) {
+                seleccion.tipo = 'C';
+                seleccion.indice = idx;
+                seleccion.sudoku = lista_partidas[idx]; // Copiamos la partida guardada
+                terminado = true;
+            }
+        }
+    }
+    return seleccion;
+}
 bool cargar_lista_nuevos(ListaSudoku& listado){
     bool cargado = false;
     ifstream archivo("log_files/lista_sudokus.txt");
 
-    int num_sudokus;
-    
-    archivo >> num_sudokus;
-
-    for (int i = 0; i < num_sudokus; i++)
+    if (archivo.is_open())
     {
-        string string_sudoku;
+    
+        int num_sudokus;
         
-        archivo >> string_sudoku;
-        ifstream archivo_sudoku("sudokus/" + string_sudoku);
-        cargado = archivo_sudoku.is_open();
-        if (cargado)
-        {
-            tReglasSudoku regla;
-            regla.carga_sudoku(archivo_sudoku);
+        archivo >> num_sudokus;
 
-            listado.insertar(regla);
-
-            archivo_sudoku.close();
-        }
-        else
+        for (int i = 0; i < num_sudokus; i++)
         {
-            cout << "No se pudo abrir sudokus/" << string_sudoku << '\n';
+            string string_sudoku;
+            
+            archivo >> string_sudoku;
+            ifstream archivo_sudoku("sudokus/" + string_sudoku);
+            cargado = archivo_sudoku.is_open();
+            if (cargado)
+            {
+                tReglasSudoku regla;
+                regla.carga_sudoku(archivo_sudoku);
+
+                listado.insertar(regla);
+
+                archivo_sudoku.close();
+            }
+            else
+            {
+                cout << "No se pudo abrir sudokus/" << string_sudoku << '\n';
+            }
+            
         }
-        
     }
+
+    archivo.close();
 
     return cargado;
 }
 
-
-
-int continuar(ListaSudoku& listado){
-    int sudoku = -1;
-    if (cargar_partidas(listado)) {
-        sudoku = submenu_sudoku(listado);
-    }
-
-    return sudoku;
-}
 
 bool cargar_partidas(ListaSudoku& listado){
     ifstream archivo("log_files/lista_partidas.txt");
@@ -184,36 +197,29 @@ bool cargar_partidas(ListaSudoku& listado){
     return carga_ok;
 }
 
-
-void serializar_sudoku(ofstream& archivo, ListaSudoku& lista, int pos)
-{
-    serializar_sudoku(archivo, lista.dame_sudoku(pos));
-}
-
 void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas)
 {
-    tReglasSudoku actual   = reglas;
-    tReglasSudoku original = actual;
+    tReglasSudoku original   = reglas;
     original.reset();
 
-    int dim = actual.dame_dimension();
+    int dim = reglas.dame_dimension();
     archivo << dim << endl;
 
     for (int f = 0; f < dim; f++)
     {
-        for (int c = 0; c < dim; c++)
-        {
-            archivo << original.dame_celda(f, c);
-            if (c < dim - 1) archivo << " ";
+        for (int c = 0; c < dim; c++) {
+            archivo << original.dame_celda(f, c) << ((c < dim - 1) ? " " : "");
+            cout << original.dame_celda(f, c) << " ";
         }
         archivo << endl;
+        cout << endl;
     }
 
     for (int f = 0; f < dim; f++)
     {
         for (int c = 0; c < dim; c++)
         {
-            int val_actual   = actual.dame_celda(f, c);
+            int val_actual   = reglas.dame_celda(f, c);
             int val_original = original.dame_celda(f, c);
 
             if (val_original == 0 && val_actual != 0)
@@ -224,53 +230,18 @@ void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas)
     archivo << -1 << endl;
 }
 
-void guardar_partida(ListaSudoku& lista, int pos)
-{
-    guardar_partida(lista.dame_sudoku(pos));
-}
-
-void guardar_partida(const tReglasSudoku& reglas)
-{
-    int count = 0;
-    string contenido_actual = "";
-
-    ifstream leer("log_files/lista_partidas.txt");
-    if (leer.is_open())
-    {
-        leer >> count;
-        leer.ignore();
-        string linea;
-        while (getline(leer, linea))
-            contenido_actual += linea + "\n";
-        leer.close();
-    }
-    count++;
-
-    ofstream archivo("log_files/lista_partidas.txt");
-    if (!archivo.is_open())
-    {
-        cout << "Error: no se pudo abrir lista_partidas.txt" << endl;
-        return;
-    }
-
-    archivo << count << endl;
-    archivo << contenido_actual;
-    serializar_sudoku(archivo, reglas);
-    archivo.close();
-}
-
 void guardar_partidas(ListaSudoku& lista)
 {
     ofstream archivo("log_files/lista_partidas.txt");
     if (!archivo.is_open())
     {
         cout << "Error: no se pudo abrir lista_partidas.txt" << endl;
-        return;
+    } else{
+        archivo << lista.dame_num_elems() << endl;
+        for (int i = 0; i < lista.dame_num_elems(); i++)
+            serializar_sudoku(archivo, lista[i]);
+
+        archivo.close();
+
     }
-
-    archivo << lista.dame_num_elems() << endl;
-    for (int i = 0; i < lista.dame_num_elems(); i++)
-        serializar_sudoku(archivo, lista, i);
-
-    archivo.close();
 }

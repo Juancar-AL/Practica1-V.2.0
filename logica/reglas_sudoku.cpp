@@ -219,19 +219,17 @@ bool tReglasSudoku::pon_valor(int f, int c, int v)
 {
     bool colocado = false;
 
-    if(coord_valid(f, c)){
+    if(coord_valid(f, c) && tablero.dame_elem(f, c).es_vacia()  && es_valor_posible(f, c, v)){
         tCelda celda = tablero.dame_elem(f, c); // Recibimos la celda a modificar
-        if(celda.es_vacia() && es_valor_posible(f, c, v)){ //Comprobamos que esté vacía y que el valor sea posible
 
-            celda.set_valor(v);
-            celda.set_ocupada();
-            tablero.colocar_celda(f, c, celda);
-            cont++;
-            actualizar_posibles(f, c, v);
-            colocado = true;
+        celda.set_valor(v);
+        celda.set_ocupada();
+        tablero.colocar_celda(f, c, celda);
+        cont++;
+        actualizar_posibles(f, c, v);
+        colocado = true;
 
-            recalcular_cuantas_celdas();
-        }
+        recalcular_cuantas_celdas();
 
     }
 
@@ -339,50 +337,6 @@ bool tReglasSudoku::carga_sudoku(ifstream &input)
     return cargado;
 }
 
-void tReglasSudoku::actualizar_posibles(const int& f, const int& c, const int& valor){
-
-    bool visitadas[MAX][MAX] = {};
-
-    int dim = dame_dimension();
-
-    if(coord_valid(f,c) && valor >= 1 && valor <= dim){
-        int idx = valor - 1;
-
-        for (int i = 0; i < valores_celda.nColumnas; i++) //Iteramos la columna 
-        {
-            if(!visitadas[f][i]){
-                quitar_posible(f, i, idx);
-                visitadas[f][i] = true;
-            }
-        }
-
-        for (int j = 0; j < valores_celda.nFilas; j++) //Iteramos la fila
-        {
-            if(!visitadas[j][c]){
-                quitar_posible(j, c, idx);
-                visitadas[j][c] = true;
-            }
-        }
-
-        //Iteramos la submatriz
-        int dim_submatriz = int(sqrt(double(dim)));
-        int startF = (f / dim_submatriz) * dim_submatriz;
-        int startC = (c / dim_submatriz) * dim_submatriz;
-
-        for (int i = startF; i < startF+dim_submatriz; i++)
-        {
-            for (int j = startC; j < startC+dim_submatriz; j++)
-            {
-                if(!visitadas[i][j]){
-                    quitar_posible(i, j, idx);
-                    visitadas[i][j] = true;
-                }
-            }
-            
-        }
-    }  
-}
-
 void tReglasSudoku::quitar_posible(const int& f, const int& c, const int val){
     //Marcamos el valor como no posible y aumentalos las celdas que lo afectan en 1
     valores_celda.valores[f][c][val].posible = false;
@@ -390,65 +344,64 @@ void tReglasSudoku::quitar_posible(const int& f, const int& c, const int val){
 
 }
 
-void tReglasSudoku::anadir_posibles(const int& f, const int& c, const int& valor){
+void tReglasSudoku::restaurar_posible(const int& f, const int& c, const int val) {
+    // Si le afecta alguna celda, reducimos ese número
+    if (valores_celda.valores[f][c][val].celdas_que_afectan > 0) {
+        valores_celda.valores[f][c][val].celdas_que_afectan--;
+    }
+    // Si ya no le afecta ninguna celda, lo establecemos como posible
+    valores_celda.valores[f][c][val].posible = 
+        (valores_celda.valores[f][c][val].celdas_que_afectan == 0);
+}
 
+void tReglasSudoku::modificar_afectados(const int& f, const int& c, const int& valor, bool quitar) {
     bool visitadas[MAX][MAX] = {};
-
     int dim = dame_dimension();
 
-    if(coord_valid(f,c) && valor >= 1 && valor <= dim){
+    if (coord_valid(f, c) && valor >= 1 && valor <= dim) {
         int idx = valor - 1;
 
-        //Iteramos la columna
-        for (int i = 0; i < valores_celda.nColumnas; i++)
-        {
-            if(!visitadas[f][i]){
-                if (valores_celda.valores[f][i][idx].celdas_que_afectan > 0) //Comprobamos si le afecta alguna celda
-                    valores_celda.valores[f][i][idx].celdas_que_afectan--; //Reducimos ese número
-
-                valores_celda.valores[f][i][idx].posible =
-                    (valores_celda.valores[f][i][idx].celdas_que_afectan == 0); //En caso de que ya no le afecte ninguna celda, establecemos ese valor como posible
+        // 1. Iteramos la columna
+        for (int i = 0; i < valores_celda.nColumnas; i++) {
+            if (!visitadas[f][i]) {
+                if (quitar) quitar_posible(f, i, idx);
+                else restaurar_posible(f, i, idx);
                 visitadas[f][i] = true;
             }
         }
 
-        //Iteramos columnas
-        for (int j = 0; j < valores_celda.nFilas; j++)
-        {
-            if(!visitadas[j][c]){
-                if (valores_celda.valores[j][c][idx].celdas_que_afectan > 0) //Comprobamos si le afecta alguna celda
-                    valores_celda.valores[j][c][idx].celdas_que_afectan--; //Reducimos ese número
-
-                valores_celda.valores[j][c][idx].posible =
-                    (valores_celda.valores[j][c][idx].celdas_que_afectan == 0); //En caso de que ya no afecte ninguna celda, establecemos ese valor como posible
-                
-                    visitadas[j][c] = true;
-            
+        // 2. Iteramos la fila
+        for (int j = 0; j < valores_celda.nFilas; j++) {
+            if (!visitadas[j][c]) {
+                if (quitar) quitar_posible(j, c, idx);
+                else restaurar_posible(j, c, idx);
+                visitadas[j][c] = true;
             }
         }
 
-        //Iteramos la submatriz
+        // 3. Iteramos la submatriz
         int dim_submatriz = int(sqrt(double(dim)));
         int startF = (f / dim_submatriz) * dim_submatriz;
         int startC = (c / dim_submatriz) * dim_submatriz;
 
-        for (int i = startF; i < startF+dim_submatriz; i++)
-        {
-            for (int j = startC; j < startC+dim_submatriz; j++)
-            {
-                if(!visitadas[i][j]){    
-                    //Comprobamos si le afecta alguna celda
-                    if (valores_celda.valores[i][j][idx].celdas_que_afectan > 0)
-                        valores_celda.valores[i][j][idx].celdas_que_afectan--; //Reducimos ese número
-
-                    valores_celda.valores[i][j][idx].posible =
-                        (valores_celda.valores[i][j][idx].celdas_que_afectan == 0); //En caso de que ya no afecte ninguna celda, establecemos ese valor como posible
+        for (int i = startF; i < startF + dim_submatriz; i++) {
+            for (int j = startC; j < startC + dim_submatriz; j++) {
+                if (!visitadas[i][j]) {
+                    if (quitar) quitar_posible(i, j, idx);
+                    else restaurar_posible(i, j, idx);
                     visitadas[i][j] = true;
                 }
             }
-            
         }
-    }  
+    }
+}
+
+void tReglasSudoku::actualizar_posibles(const int& f, const int& c, const int& valor) {
+    modificar_afectados(f, c, valor, true); // true = queremos quitar los posibles
+}
+
+void tReglasSudoku::anadir_posibles(const int& f, const int& c, const int& valor) {
+    modificar_afectados(f, c, valor, false); // false = queremos restaurar los posibles
 }
 
 void tReglasSudoku::ini_matriz3D(){
@@ -509,25 +462,27 @@ int tReglasSudoku::cuantas_celdas_pueden_tener(int n_valores) const{
 }
 
 void tReglasSudoku::recalcular_cuantas_celdas(){
-    for (int i = 0; i < MAX; i++)
-    {
-        int celdas = 0;
+    for (int i = 0; i < MAX; i++) {
+        cuantas_celdas[i] = 0;
+    }
+    
+    // Guardamos la dimensión en una variable local para no llamar a la función 81 veces.
+    int dim = dame_dimension(); 
 
-        for (int fila = 0; fila < dame_dimension(); fila++)
-        {
-            for (int columna = 0; columna < dame_dimension(); columna++)
-            {
-                if (dame_celda(fila, columna) == 0)
-                {
-                    if (posibles_valores(fila, columna) == i+1) celdas++;
-                }
-                
-            }
+    // 2. Recorremos el tablero UNA sola vez.
+    for (int fila = 0; fila < dim; fila++) {
+        for (int columna = 0; columna < dim; columna++) {
             
+            if (dame_celda(fila, columna) == 0) {
+                // Calculamos sus valores posibles una única vez por celda
+                int num_posibles = posibles_valores(fila, columna);
+                
+                // Si tiene valores posibles (y está en rango), incrementamos su contador
+                if (num_posibles > 0 && num_posibles <= dim) {
+                    cuantas_celdas[num_posibles - 1]++;
+                }
+            }
         }
-
-        cuantas_celdas[i] = celdas;
-
     }
 }
 

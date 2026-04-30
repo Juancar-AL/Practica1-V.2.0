@@ -55,6 +55,9 @@ class tReglasSudoku{
     } tValores;
     tValores valores_celda;
 
+    void tReglasSudoku::restaurar_posible(const int& f, const int& c, const int val);
+    void tReglasSudoku::modificar_afectados(const int& f, const int& c, const int& valor, bool quitar);
+
     public:
     tReglasSudoku();
     tReglasSudoku(const tReglasSudoku& otro);  // constructor por copia

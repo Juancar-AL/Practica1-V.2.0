@@ -14,17 +14,16 @@ using namespace std;
 
 
 void mostrar_sudoku(const tReglasSudoku& reglas){
-        const int LINEA_HORIZONTAL = 196;
+    
+    const int LINEA_HORIZONTAL = 196;
     const int LINEA_VERTICAL = 179;
     const int CRUCE = 197;
     const int ANCHO_CELDA = 3;
 
-    int opcion = -1;
     int dim = reglas.dame_dimension();
     int dim_submatriz = (int)sqrt((double)dim);
     if (dim_submatriz <= 0)
         dim_submatriz = 1;
-    string error_texto;
 
     cout << endl
          << CYAN << "================ SUDOKU ================" << RESET << '\n';
@@ -80,51 +79,69 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
     }
 }
 
-int submenu_sudoku(ListaSudoku& listado){
-    int sudoku = -1;
-    
-    while (sudoku == -1)
-    {
+int submenu_sudoku(const ListaSudoku& listado) {
+    int indice_resultado = -1;
+    bool terminado = false;
+    int seleccion;
+
+    while (!terminado) {
         mostrar_lista(listado);
-
-        int seleccion;
-        cout << "Elije un sudoku (1 - " << listado.dame_num_elems() << ") : ";
-        cin >> seleccion;
-
-        // Menú para ver o jugar el sudoku seleccionado
-        bool opcion_confirmada = false;
-        while (!opcion_confirmada)
-        {
-            cout << "1. Ver sudoku" << endl;
-            cout << "2. Jugar sudoku" << endl;
-            cout << "3. Volver a la lista" << endl;
-            cout << "Opcion: ";
-            char opcion;
-            cin >> opcion;
-
-            switch (opcion)
-            {
-            case '1':
-                cout << "\nSudoku seleccionado:" << endl;
-                mostrar_sudoku(listado.dame_sudoku(seleccion - 1));
-                break;
-            case '2':
-                sudoku = seleccion;
-                opcion_confirmada = true;
-                break;
-            case '3':
-                cout << "\n";
-                opcion_confirmada = true;
-                break;
-            default:
-                cout << "Opcion no valida. Intenta de nuevo." << endl;
+        cout << "Elije un sudoku (1 - " << listado.dame_num_elems() << ") o 0 para cancelar: ";
+        
+        // Comprobamos si la entrada es un número
+        if (cin >> seleccion) {
+            if (seleccion == 0) {
+                terminado = true; // El usuario cancela
+            } else if (seleccion > 0 && seleccion <= listado.dame_num_elems()) {
+                // Si elige jugar en el siguiente menú, guardamos el índice y terminamos
+                if (gestionar_seleccion(listado[seleccion - 1])) {
+                    indice_resultado = seleccion - 1;
+                    terminado = true;
+                }
+                // Si no elige jugar (opción '3' en gestionar_seleccion), 
+                // terminado sigue siendo false y el bucle vuelve a mostrar la lista.
+            } else {
+                cout << "Error: Indice fuera de rango." << endl;
             }
+        } else {
+            // Si no es un número, limpiamos el error del flujo
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Error: Por favor, introduce un numero." << endl;
         }
     }
 
-    return sudoku;
+    return indice_resultado;
 }
 
+// Devuelve true si el usuario decidió JUGAR este sudoku
+bool gestionar_seleccion(const tReglasSudoku& sudoku) {
+    char opcion = ' ';
+    while (opcion != '2' && opcion != '3') {
+        cout << "\n1. Ver sudoku\n2. Jugar sudoku\n3. Volver a la lista\nOpcion: ";
+        cin >> opcion;
+
+        if (opcion == '1') {
+            cout << "\nVisualizando tablero:" << endl;
+            mostrar_sudoku(sudoku);
+        }
+    }
+    return (opcion == '2'); // Retorna true solo si eligió jugar
+}
+
+string traducir_error(tError error) {
+    string texto = "";
+    switch (error) {
+        case opciones:  texto = "OPCION INCORRECTA"; break;
+        case valor:     texto = "VALOR INCORRECTO"; break;
+        case bloqueada: texto = "CELDA BLOQUEADA!"; break;
+        case original:  texto = "CELDA ORIGINAL"; break;
+        case vacia:     texto = "CELDA VACIA"; break;
+        case ocupada:   texto = "CELDA OCUPADA"; break;
+        default:        texto = ""; break;
+    }
+    return texto;
+}
 
 int menu_sudoku(const tReglasSudoku &reglas, const tError error)
 {
@@ -145,42 +162,16 @@ int menu_sudoku(const tReglasSudoku &reglas, const tError error)
         cout << "6. Resolver el sudoku\n";
         cout << "7. Salir\n";
         cout << YELLOW << "--------------------------------" << RESET << '\n';
-        switch (error)
-        {
-        case opciones:
-            error_texto = "OPCION INCORRECTA";
-            break;
-        case valor:
-            error_texto = "VALOR INCORRECTO";
-            break;
-        case bloqueada:
-            error_texto = "CELDA BLOQUEADA!";
-            break;
-        case original:
-            error_texto = "CELDA ORIGINAL";
-            break;
-        case vacia:
-            error_texto = "CELDA VACIA";
-            break;
-        case ocupada:
-            error_texto = "CELDA OCUPADA";
-            break;
-        default:
-            error_texto = "";
-            break;
-        }
+        
+        error_texto = traducir_error(error);
+        
         cout << BG_RED << error_texto << RESET << endl;
-        if(error == bloqueada){
-            int f, c;
-            cout << "Celdas bloqueadas: ";
-            for (int i = 0; i < reglas.dame_num_celdas_bloqueadas(); i++)
-            {
-                reglas.dame_celda_bloqueada(i, f, c);
-                cout << "(" << f << ", " << c << ")" << ", ";
-            }
-            cout << endl;
-            pausar();
+
+        if (error == bloqueada)
+        {
+            mostrar_bloqueos(reglas);
         }
+        
         cout << "Opcion: ";
 
         cin >> opcion;
@@ -192,6 +183,19 @@ int menu_sudoku(const tReglasSudoku &reglas, const tError error)
     }
 
     return opcion;
+}
+
+void mostrar_bloqueos(const tReglasSudoku& reglas){
+    int f, c;
+    cout << "Celdas bloqueadas: ";
+    for (int i = 0; i < reglas.dame_num_celdas_bloqueadas(); i++)
+    {
+        reglas.dame_celda_bloqueada(i, f, c);
+        cout << "(" << f << ", " << c << ")" << ", ";
+    }
+    cout << endl;
+    pausar();
+
 }
 
 void poner_valor(tReglasSudoku &reglas, tError &error)
@@ -312,12 +316,15 @@ char start_menu()
 
 bool comenzar_partida(tReglasSudoku &reglas)
 {
-    bool guardada = false;
     tError error = ninguno;
 
-    int opcion = menu_sudoku(reglas, error);
+    int opcion = 0;
+
     while (opcion != 7)
     {
+
+        opcion = menu_sudoku(reglas, error);
+
         error = ninguno;
         switch (opcion)
         {
@@ -338,13 +345,16 @@ bool comenzar_partida(tReglasSudoku &reglas)
             reglas.autocompletar();
             break;
         case 6:
-           cout << resolver_sudoku(reglas, 0,0) << endl;
+            resolver_sudoku(reglas, 0,0);
             break;
         default:
             error = opciones;
             break;
         }
-        opcion = menu_sudoku(reglas, error);
+
+        if (error == ninguno && reglas.bloqueo())
+            error = bloqueada;
+
     } 
 
     return reglas.terminado();
@@ -356,40 +366,39 @@ bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna){
     bool resuelto = false;
     int dimension = sudoku.dame_dimension(); // Usamos la dimensión de tu clase
 
-    
     // 1. CASO BASE: Si llegamos a la fila final, terminamos
     if (fila == dimension) {
         resuelto = true;
-    } 
+    }
     // 2. SALTO DE LÍNEA: Si nos salimos por la derecha, pasamos a la siguiente fila
     else if (columna == dimension) {
         resuelto = resolver_sudoku(sudoku, fila + 1, 0);
-    } 
+    }
     // 3. CELDA OCUPADA: Avanzamos a la siguiente celda
     else if (sudoku.dame_celda(fila, columna) != 0) {
         resuelto = resolver_sudoku(sudoku, fila, columna + 1);
-    } 
-    // 4. CELDA VACÍA: 
+    }
+    // 4. CELDA VACÍA:
     else {
         // Asumimos que los valores del Sudoku van de 1 a la dimensión (ej. 1 al 9)
         for (int i = 1; i <= dimension && !resuelto; i++) {
-            
+
             // Si el número es válido según las reglas...
             if (sudoku.es_valor_posible(fila, columna, i)) {
-                
+
                 sudoku.pon_valor(fila, columna, i); // Lo ponemos
-                
+
                 // Intentamos resolver el resto del tablero
                 resuelto = resolver_sudoku(sudoku, fila, columna + 1);
-                
+
                 // BACKTRACKING: Si este camino nos llevó a un callejón sin salida...
                 if (!resuelto) {
                     sudoku.quita_valor(fila,columna);// Lo volvemos a dejar vacío (0)
-                } else{
                 }
             }
         }
     }
+
 
     return resuelto;
 }
