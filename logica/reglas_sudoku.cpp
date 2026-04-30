@@ -147,41 +147,36 @@ void tReglasSudoku::actualizar_bloqueos(){
     }
 }
 
-bool tReglasSudoku::es_valor_posible(int f, int c, int v) const
-{
+bool tReglasSudoku::es_valor_posible(int f, int c, int v) const {
     int dim = dame_dimension();
+    bool posible = false; // Asumimos false por defecto
 
-    bool posible = true;
-
-    if(coord_valid(f, c)){
-
-        if (v < 1 || v > dim || !tablero.dame_elem(f, c).es_vacia()) // Comrprobamos que el valor a introducir esté entre los posibles y que la celda no esté rellena o sea una celda original
-            posible = false;
-
-       if(posible && !valores_celda.valores[f][c][v-1].posible) posible = false;
-
-    } else posible = false;
+    if (coord_valid(f, c) && 
+        v >= 1 && v <= dim && 
+        tablero.dame_elem(f, c).es_vacia() && 
+        valores_celda.valores[f][c][v-1].posible) 
+    {
+        posible = true;
+    }
 
     return posible;
 }
 
 int tReglasSudoku::posibles_valores(int f, int c, int valores[]) const
 {
-
     int num_posibles = 0; //Contador de valores posibles
-    if(coord_valid(f, c)){
-        if (tablero.dame_elem(f, c).es_vacia())
+    if(coord_valid(f, c) && tablero.dame_elem(f, c).es_vacia()){
+
+        for (int v = 1; v <= dame_dimension(); v++)
         {
-            for (int v = 1; v <= dame_dimension(); v++)
+            if (es_valor_posible(f, c, v)) //Iteramos por cada valor posible (lista [1 - DIM])
             {
-                if (es_valor_posible(f, c, v)) //Iteramos por cada valor posible (lista [1 - DIM])
-                {
-                    if (valores != nullptr) //Comprobamos que el puntero al array no sea NULL
-                        valores[num_posibles] = v; //Añadimos el nuevo valor a la lista
-                    num_posibles++;
-                }
+                if (valores != nullptr) //Comprobamos que el puntero al array no sea NULL
+                    valores[num_posibles] = v; //Añadimos el nuevo valor a la lista
+                num_posibles++;
             }
         }
+    
     }
 
     return num_posibles;
@@ -243,22 +238,21 @@ bool tReglasSudoku::quita_valor(int f, int c)
 {
     bool quitado = false;
 
-    if(coord_valid(f, c)){
+    if(coord_valid(f, c) && tablero.dame_elem(f,c).es_ocupada()){
         tCelda celda = tablero.dame_elem(f, c); // Recibimos la celda a modificar
 
-        if(celda.es_ocupada()){ //Comprobamos que la celda esté ocupada
-            int val = celda.dame_valor();
+        int val = celda.dame_valor();
 
-            celda.set_valor(0);
-            celda.set_vacia();
-            tablero.colocar_celda(f, c, celda);
-            cont--;
-            anadir_posibles(f, c, val);
-            quitado = true;
+        celda.set_valor(0);
+        celda.set_vacia();
+        tablero.colocar_celda(f, c, celda);
+        cont--;
+        anadir_posibles(f, c, val);
+        quitado = true;
 
-            recalcular_cuantas_celdas();
-            actualizar_bloqueos();
-        }
+        recalcular_cuantas_celdas();
+        actualizar_bloqueos();
+    
     }
 
     return quitado;
