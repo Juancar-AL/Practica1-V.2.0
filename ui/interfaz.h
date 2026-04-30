@@ -27,3 +27,4 @@ void pausar();
 void mostrar_sudoku(const tReglasSudoku& reglas);
 int submenu_sudoku(ListaSudoku& listado);
 bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna);
+void mostrar_lista(const ListaSudoku& lista);

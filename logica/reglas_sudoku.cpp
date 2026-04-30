@@ -107,28 +107,41 @@ bool tReglasSudoku::coord_valid(const int& f, const int&c) const{
 void tReglasSudoku::actualizar_bloqueos(){
     int dim = dame_dimension();
     lista.cont = 0;
+
+    // Asegurar consistencia: si hay capacidad pero no array, crear array vacío
+    if (lista.cap > 0 && lista.lista == nullptr) {
+        lista.lista = new tPosicion*[lista.cap];
+        for (int k = 0; k < lista.cap; k++) lista.lista[k] = nullptr;
+    }
+
     for (int i = 0; i < dim; i++)
     {
         for (int j = 0; j < dim; j++)
         {
-            if (tablero.dame_elem(i, j).es_vacia() && posibles_valores(i, j) == 0)
+            if (tablero.dame_elem(i, j).es_vacia())
             {
-                if (lista.cont == lista.cap)
+                int posibles = posibles_valores(i, j); // usa la versión con default nullptr
+                if (posibles == 0)
                 {
-                    int newCap = (lista.cap == 0) ? 1 : lista.cap *2;
-                    tPosicion ** nuevo = new tPosicion*[newCap];
-                    for (int k = 0; k < lista.cont; k++)
+                    if (lista.cont == lista.cap)
                     {
-                        nuevo[k] = lista.lista[k];
+                        int newCap = (lista.cap == 0) ? 1 : lista.cap * 2;
+                        tPosicion ** nuevo = new tPosicion*[newCap];
+                        // copiar elementos existentes (si los hay)
+                        for (int k = 0; k < lista.cont; k++)
+                            nuevo[k] = lista.lista ? lista.lista[k] : nullptr;
+                        // inicializar resto a nullptr
+                        for (int k = lista.cont; k < newCap; k++)
+                            nuevo[k] = nullptr;
+
+                        delete[] lista.lista;
+                        lista.lista = nuevo;
+                        lista.cap = newCap;
                     }
 
-                    delete[] lista.lista;
-                    lista.lista = nuevo;
-                    lista.cap = newCap;
+                    lista.lista[lista.cont] = new tPosicion{i, j};
+                    lista.cont++;
                 }
-
-                lista.lista[lista.cont] = new tPosicion{i, j};
-                lista.cont++;
             }
         }
     }
