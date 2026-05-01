@@ -1,5 +1,4 @@
-10
-sudoku_0.txt
+9
 sudoku_2.txt
 sudoku_1.txt
 sudoku_3.txt

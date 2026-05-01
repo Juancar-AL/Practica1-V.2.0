@@ -226,10 +226,8 @@ void serializar_sudoku(ofstream& archivo, const tReglasSudoku& reglas)
     {
         for (int c = 0; c < dim; c++) {
             archivo << original.dame_celda(f, c) << ((c < dim - 1) ? " " : "");
-            cout << original.dame_celda(f, c) << " ";
         }
         archivo << endl;
-        cout << endl;
     }
 
     for (int f = 0; f < dim; f++)

@@ -190,24 +190,41 @@ bool gestionar_seleccion(const tReglasSudoku& sudoku) {
 
 // ==================== FUNCIONES DE ENTRADA/MODIFICACIÓN ====================
 
-void poner_valor(tReglasSudoku &reglas, tError &error)
-{
-    if (error != bloqueada)
-    {
+void poner_valor(tReglasSudoku &reglas, tError &error) {
+    if (error != bloqueada) {
         int fila, columna, v;
-        cout << "Introduce fila y columna: ";
-        cin >> fila >> columna;
-        cout << "Introduce el valor: ";
-        cin >> v;
+        bool lectura_ok = true;
 
-        if (!reglas.pon_valor(fila, columna, v))
-        {
-            error = valor;
+        cout << "Introduce fila y columna: ";
+        
+        // Intentamos leer fila y columna
+        if (!(cin >> fila >> columna)) {
+            error = valor;           // Marcamos error
+            cin.clear();             // Limpiamos el flujo
+            cin.ignore(1000, '\n');  // Vaciamos basura
+            lectura_ok = false;      // Impedimos que siga leyendo
         }
-        else
-        {
-            if (reglas.bloqueo())
-                error = bloqueada;
+        
+        // Solo pedimos el valor si la fila y columna se leyeron bien
+        if (lectura_ok) {
+            cout << "Introduce el valor: ";
+            if (!(cin >> v)) {
+                error = valor;       // Marcamos error si falla el valor
+                cin.clear();
+                cin.ignore(1000, '\n');
+                lectura_ok = false;
+            }
+        }
+
+        // Solo intentamos poner el valor si las lecturas fueron exitosas
+        if (lectura_ok) {
+            if (!reglas.pon_valor(fila, columna, v)) {
+                error = valor;       // Error si la lógica del juego lo rechaza
+            } else {
+                if (reglas.bloqueo()) {
+                    error = bloqueada; // Error si el movimiento bloquea celdas
+                }
+            }
         }
     }
 }
