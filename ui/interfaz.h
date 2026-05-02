@@ -20,6 +20,7 @@ enum tError {
     bloqueada,
     original,
     vacia,
+    no_resuelto,
     ocupada
 };
 

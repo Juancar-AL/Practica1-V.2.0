@@ -20,6 +20,7 @@ tReglasSudoku::tReglasSudoku() //Constructora básica sin argumentos, incializam
     ini_matriz3D();
 }
 
+//Constructor por copia, realizamos una copia profunda de la lista de bloqueos y una copia simple del resto de miembros
 tReglasSudoku::tReglasSudoku(const tReglasSudoku& otro) {
     cont = otro.cont;
     tablero = otro.tablero;
@@ -42,7 +43,7 @@ tReglasSudoku::tReglasSudoku(const tReglasSudoku& otro) {
     }
 }
 
-
+//Destructora, liberamos la memoria de la lista de bloqueos y ponemos a nullptr el puntero y el contador a 0
 tReglasSudoku::~tReglasSudoku(){
     for (int i = 0; i < lista.cont; i++)
     {
@@ -133,7 +134,7 @@ void tReglasSudoku::actualizar_bloqueos(){
                         // inicializar resto a nullptr
                         for (int k = lista.cont; k < newCap; k++)
                             nuevo[k] = nullptr;
-
+						// liberar memoria antigua
                         delete[] lista.lista;
                         lista.lista = nuevo;
                         lista.cap = newCap;
@@ -151,6 +152,7 @@ bool tReglasSudoku::es_valor_posible(int f, int c, int v) const {
     int dim = dame_dimension();
     bool posible = false; // Asumimos false por defecto
 
+	// Verificamos que las coordenadas sean válidas, el valor esté dentro del rango permitido, la celda esté vacía y que el valor sea posible según nuestra matriz de posibilidades.
     if (coord_valid(f, c) && 
         v >= 1 && v <= dim && 
         tablero.dame_elem(f, c).es_vacia() && 
@@ -284,7 +286,7 @@ bool tReglasSudoku::carga_sudoku(ifstream &input)
     input >> dim;
 
     
-    //MODIFICADO
+	//MODIFICADO - Inicializamos la matriz de posibilidades con la dimensión del sudoku que vamos a cargar, para evitar problemas de acceso a índices fuera de rango.
     valores_celda.nColumnas = dim;
     valores_celda.nFilas = dim;
 
@@ -309,7 +311,7 @@ bool tReglasSudoku::carga_sudoku(ifstream &input)
                     tablero.colocar_celda(i, j, c);
                     cont++;
 
-                    //MODIFICADO
+					//MODIFICADO - Actualizamos los posibles valores de las celdas afectadas por el valor que acabamos de colocar.
                     actualizar_posibles(i, j, v);
                 }
                 else
@@ -398,6 +400,7 @@ void tReglasSudoku::anadir_posibles(const int& f, const int& c, const int& valor
     modificar_afectados(f, c, valor, false); // false = queremos restaurar los posibles
 }
 
+// Inicializamos la matriz de posibilidades, marcando todos los valores como posibles y sin celdas que los afecten.
 void tReglasSudoku::ini_matriz3D(){
     for (int i = 0; i < MAX; i++)
     {
@@ -445,6 +448,7 @@ tReglasSudoku& tReglasSudoku::operator=(const tReglasSudoku& otro) {
     return *this;
 }
 
+// Retorna la cantidad de celdas que pueden tener exactamente n_valores posibles. Si n_valores no es válido, retorna 0.
 int tReglasSudoku::cuantas_celdas_pueden_tener(int n_valores) const{
     int cantidad = 0;
 
@@ -480,6 +484,7 @@ void tReglasSudoku::recalcular_cuantas_celdas(){
     }
 }
 
+// Un sudoku se considera "menor" que otro si tiene menos celdas vacías. Si ambos tienen el mismo número de celdas vacías, se compara la cantidad de celdas con 1 posible valor, luego con 2 posibles valores, etc. hasta encontrar una diferencia o agotar todas las posibilidades.
 bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
     bool resultado = false;
     bool decidido = false;
@@ -506,6 +511,8 @@ bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
     }
     return resultado;
 }
+
+// Dos sudokus se consideran iguales si tienen la misma dimensión y la misma cantidad de celdas con 1 posible valor, 2 posibles valores, etc. (es decir, la misma distribución de posibilidades), independientemente de los valores específicos en el tablero.
 bool tReglasSudoku::operator==(const tReglasSudoku& s2) const{
     bool iguales = true;
 

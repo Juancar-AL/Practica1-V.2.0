@@ -4,7 +4,6 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <string>
 #include <thread>
 
@@ -32,7 +31,7 @@ char start_menu()
         {
             cout << "Opcion no valida | Debes introducir 'N' , 'C' o 'A'" << endl;
             cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin.ignore(1000, '\n');
         }
     }
 
@@ -108,6 +107,7 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
     }
 }
 
+//Iteramos el array variable de sudokus y mostramos su número de celdas vacías y cuántas celdas pueden tener cada cantidad de valores posibles (1, 2, 3, etc.)
 void mostrar_lista(const ListaSudoku& lista){
     for (int i = 0; i < lista.dame_num_elems(); i++)
     {
@@ -122,6 +122,7 @@ void mostrar_lista(const ListaSudoku& lista){
     
 }
 
+//En caso de que ocurra un bloqueo mostramos el array dinámico de bloqueos con su fila y columna para que el usuario pueda identificarlo fácilmente
 void mostrar_bloqueos(const tReglasSudoku& reglas){
     int f, c;
     cout << "Celdas bloqueadas: ";
@@ -173,6 +174,7 @@ int submenu_sudoku(const ListaSudoku& listado) {
     return indice_resultado;
 }
 
+//Permitimos al usuario elegir entre ver el sudoku, jugarlo o volver a la lista. Si elige jugar, retornamos true para que el submenu sepa que debe iniciar la partida con ese sudoku.
 bool gestionar_seleccion(const tReglasSudoku& sudoku) {
     char opcion = ' ';
     while (opcion != '2' && opcion != '3') {
@@ -235,15 +237,17 @@ void quitar_valor(tReglasSudoku &reglas, tError &error)
     cout << "Introduce fila y columna: " << endl;
     cin >> fila >> columna;
 
+	//Comprobamos que las coordenadas sean válidas, que la celda no esté vacía y que no sea original antes de intentar quitar el valor. Si alguna de estas condiciones no se cumple, marcamos el error correspondiente.
     int dim = reglas.dame_dimension();
     if (fila < 0 || fila >= dim || columna < 0 || columna >= dim)
     {
         error = valor;
     }
-    else if (reglas.dame_celda(fila, columna) == 0)
+	else if (reglas.dame_celda(fila, columna) == 0) //Comrpobamos que la celda no esté vacía antes de intentar quitar el valor. Si está vacía, marcamos el error correspondiente.
     {
         error = vacia;
-    } else if (!reglas.quita_valor(fila, columna))
+	}
+	else if (!reglas.quita_valor(fila, columna)) //Comprobamos que la celda no sea original antes de intentar quitar el valor. Si es original, marcamos el error correspondiente.
     {
         error = original;
     }
@@ -257,12 +261,14 @@ int posibles_valores(tReglasSudoku &reglas, tError &error)
     cout << "Introduce fila y columna: " << endl;
     cin >> fila >> columna;
     int lista[MAX];
+	//Comprobamos que las coordenadas sean válidas y que la celda esté vacía antes de intentar obtener sus valores posibles. Si alguna de estas condiciones no se cumple, marcamos el error correspondiente.
     if (fila >= 0 && columna >= 0 && fila < dim && columna < dim)
     {
         if (reglas.dame_celda(fila, columna) == 0)
         {
             cantidad = reglas.posibles_valores(fila, columna, lista);
 
+			// Mostramos la lista de valores posibles para esa celda
             cout << "POSIBLES VALORES (" << cantidad << "): ";
             if (cantidad == 0)
             {
@@ -293,9 +299,12 @@ int posibles_valores(tReglasSudoku &reglas, tError &error)
 bool comenzar_partida(tReglasSudoku &reglas)
 {
     tError error = ninguno;
+    tReglasSudoku copia;
+	bool hayCambios = true;
 
     int opcion = 0;
 
+	//Bucle principal del juego, se repetirá hasta que el usuario elija salir (opción 7). En cada iteración, se muestra el menú y se procesa la opción elegida. Si la opción es válida, se ejecuta la acción correspondiente. Si la opción no es válida, se marca el error de opciones. Después de procesar la opción, si no hubo errores y el movimiento ha bloqueado alguna celda, se marca el error de bloqueo.
     while (opcion != 7)
     {
 
@@ -321,7 +330,26 @@ bool comenzar_partida(tReglasSudoku &reglas)
             reglas.autocompletar();
             break;
         case 6:
-            resolver_sudoku(reglas, 0,0);
+            copia = reglas; // Hacemos una copia para no modificar el estado actual del juego
+			while (hayCambios && !copia.terminado()) { // Mientras se sigan completando celdas y el sudoku no esté terminado...
+                int iteracion_anterior = copia.dame_num_celdas_vacias();
+                copia.autocompletar();
+				if (copia.dame_num_celdas_vacias() == iteracion_anterior) hayCambios = false; // Si no se han completado nuevas celdas, salimos del bucle. De lo contrario, seguimos autocompletando.
+            }
+			if (copia.bloqueo()) {
+                error = no_resuelto;
+            }
+            else {
+                reglas = copia;
+                if (!reglas.terminado())
+                {
+                    resolver_sudoku(reglas, 0, 0);
+                }
+                if (!reglas.terminado()) {
+                    error = no_resuelto;
+                }
+                
+            }
             break;
         default:
             error = opciones;
@@ -343,6 +371,7 @@ int menu_sudoku(const tReglasSudoku &reglas, const tError error)
 
     mostrar_sudoku(reglas);
 
+	// Si el sudoku no está terminado, mostramos el menú. Si ya está terminado, mostramos un mensaje de felicitación y salimos.
     if (!reglas.terminado())
     {
         cout << '\n';
@@ -440,6 +469,7 @@ string traducir_error(tError error) {
         case original:  texto = "CELDA ORIGINAL"; break;
         case vacia:     texto = "CELDA VACIA"; break;
         case ocupada:   texto = "CELDA OCUPADA"; break;
+		case no_resuelto: texto = "NO SE PUDO RESOLVER EL SUDOKU"; break;
         default:        texto = ""; break;
     }
     return texto;

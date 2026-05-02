@@ -24,6 +24,7 @@ ListaSudoku::ListaSudoku(const ListaSudoku& lista){
     cap = lista.cap;
 
     if(cap>0){
+		// Copia profunda de los punteros a tReglasSudoku
         lista_sudokus = new tReglasSudoku*[cap];
         for (int i = 0; i < size; i++)
         {
@@ -61,8 +62,9 @@ void ListaSudoku::insertar(const tReglasSudoku& sudoku) {
     int pos = size;
     int celdas_vacias_nuevo = sudoku.dame_num_celdas_vacias();
     bool encontrado = false;
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < size  && !encontrado; i++)
     {
+		// Si el nuevo sudoku tiene menos celdas vacías, lo insertamos antes
         if (celdas_vacias_nuevo < (*lista_sudokus[i]).dame_num_celdas_vacias())
         {
             pos = i;
@@ -70,17 +72,16 @@ void ListaSudoku::insertar(const tReglasSudoku& sudoku) {
         }
     }
 
-    if(!encontrado){
-        // Desplazar elementos a la derecha desde pos
-        for (int i = size; i > pos; i--)
-        {
-            lista_sudokus[i] = lista_sudokus[i - 1];
-        }
-
-        // Insertar en posición ordenada
-        lista_sudokus[pos] = new tReglasSudoku(sudoku);
-        size++;
+    // Desplazar elementos a la derecha desde pos
+    for (int i = size; i > pos; i--)
+    {
+        lista_sudokus[i] = lista_sudokus[i - 1];
     }
+
+    // Insertar en posición ordenada
+    lista_sudokus[pos] = new tReglasSudoku(sudoku);
+    size++;
+    
 }
 
 void ListaSudoku::eliminar(const int& pos){
@@ -135,6 +136,7 @@ ListaSudoku& ListaSudoku::operator=(const ListaSudoku& lista) {
     return *this;
 }
 
+// Para comparar dos listas de sudokus, se puede usar el número de celdas vacías del primer sudoku en cada lista como criterio de ordenación.
 bool ListaSudoku::operator<(const ListaSudoku& otra) const {
     bool resultado;
     if (size == 0 || otra.size == 0) {
