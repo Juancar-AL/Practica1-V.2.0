@@ -31,7 +31,7 @@ tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& l
 int main()
 {
 
-    // _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
     ListaSudoku lista_nuevos;
     ListaSudoku lista_partidas;
@@ -54,7 +54,7 @@ int main()
             actualizar_listas(lista_partidas, sel, completado);
         }
 
-        cout << "Volviendo al menu principal..." << endl;
+        cout << endl <<"Volviendo al menu principal..." << endl;
     }
 
     guardar_partidas(lista_partidas);
@@ -123,21 +123,22 @@ tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& l
 
 // ==================== FUNCIONES DE CARGA DE DATOS ====================
 
-bool cargar_lista_nuevos(ListaSudoku& listado){
+bool cargar_lista_nuevos(ListaSudoku& listado) {
     bool cargado = false;
     ifstream archivo("log_files/lista_sudokus.txt");
 
     if (archivo.is_open())
     {
-    
+
         int num_sudokus;
-        
+        bool error = false;
+
         archivo >> num_sudokus;
 
         for (int i = 0; i < num_sudokus; i++)
         {
             string string_sudoku;
-            
+
             archivo >> string_sudoku;
             ifstream archivo_sudoku("sudokus/" + string_sudoku);
             cargado = archivo_sudoku.is_open();
@@ -154,8 +155,10 @@ bool cargar_lista_nuevos(ListaSudoku& listado){
             {
                 cout << "No se pudo abrir sudokus/" << string_sudoku << '\n';
             }
-            
+
         }
+    }
+    else {
     }
 
     archivo.close();

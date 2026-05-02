@@ -1,5 +1,7 @@
 #include "reglas_sudoku.h"
 
+#include "../checkML.h"
+
 #include <cmath>
 #include <iostream>
 
@@ -33,6 +35,11 @@ tReglasSudoku::tReglasSudoku(const tReglasSudoku& otro) {
         lista.lista = new tPosicion*[otro.lista.cap];
         for (int i = 0; i < otro.lista.cont; i++) {
             lista.lista[i] = new tPosicion{otro.lista.lista[i]->fila, otro.lista.lista[i]->columna};
+        }
+
+        for (int i = otro.lista.cont; i < otro.lista.cap; i++)
+        {
+            lista.lista[i] = nullptr;
         }
     } else {
         lista.lista = nullptr;
@@ -285,6 +292,13 @@ bool tReglasSudoku::carga_sudoku(ifstream &input)
     bool cargado = false;
     tCelda c;
 
+    for (int i = 0; i < lista.cont; i++)
+    {
+        delete lista.lista[i];
+        lista.lista[i] = nullptr;
+
+    }
+
     cont = 0;
     lista.cont = 0;
 
@@ -444,6 +458,10 @@ tReglasSudoku& tReglasSudoku::operator=(const tReglasSudoku& otro) {
             for (int i = 0; i < otro.lista.cont; i++) {
                 lista.lista[i] = new tPosicion{otro.lista.lista[i]->fila, otro.lista.lista[i]->columna};
             }
+            for (int i = otro.lista.cont; i < otro.lista.cap; i++)
+            {
+                lista.lista[i] = nullptr;
+            }
         } else {
             lista.lista = nullptr;
         }
@@ -503,18 +521,17 @@ bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
     else {
         int dim = dame_dimension();
 
-        for (int n = 1; n <= dim && !decidido; n++)
-        {
+        int n = 1;
+        while(n <= dim && !decidido) {
             int c1 = cuantas_celdas_pueden_tener(n);
             int c2 = s2.cuantas_celdas_pueden_tener(n);
-
-            if (c1 != c2)
-            {
+            if (c1 != c2) {
                 // Más celdas muy restringidas => sudoku más fácil => "menor".
                 resultado = (c1 > c2);
                 decidido = true;
             }
-        }
+            n++;
+		}
     }
     return resultado;
 }
@@ -529,12 +546,13 @@ bool tReglasSudoku::operator==(const tReglasSudoku& s2) const{
     else {
         int dim = dame_dimension();
 
-        for (int n = 1; n <= dim && iguales; n++)
-        {
+        int n = 1;
+        while(n <= dim && iguales) {
             if (cuantas_celdas_pueden_tener(n) != s2.cuantas_celdas_pueden_tener(n)) {
                 iguales = false;
             }
-        }
+            n++;
+		}
     }
 
     return iguales;

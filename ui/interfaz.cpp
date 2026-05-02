@@ -428,21 +428,19 @@ bool resolver_sudoku(tReglasSudoku& sudoku, int fila, int columna){
     // 4. CELDA VACÍA:
     else {
         // Asumimos que los valores del Sudoku van de 1 a la dimensión (ej. 1 al 9)
-        for (int i = 1; i <= dimension && !resuelto; i++) {
-
+        int i = 1;
+        while (i <= dimension && !resuelto) {
             // Si el número es válido según las reglas...
             if (sudoku.es_valor_posible(fila, columna, i)) {
-
                 sudoku.pon_valor(fila, columna, i); // Lo ponemos
-
                 // Intentamos resolver el resto del tablero
                 resuelto = resolver_sudoku(sudoku, fila, columna + 1);
-
                 // BACKTRACKING: Si este camino nos llevó a un callejón sin salida...
                 if (!resuelto) {
-                    sudoku.quita_valor(fila,columna);// Lo volvemos a dejar vacío (0)
+                    sudoku.quita_valor(fila, columna);// Lo volvemos a dejar vacío (0)
                 }
             }
+            i++;
         }
     }
 

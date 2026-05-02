@@ -62,15 +62,14 @@ void ListaSudoku::insertar(const tReglasSudoku& sudoku) {
     int pos = size;
     int celdas_vacias_nuevo = sudoku.dame_num_celdas_vacias();
     bool encontrado = false;
-    for (int i = 0; i < size  && !encontrado; i++)
-    {
-		// Si el nuevo sudoku tiene menos celdas vacías, lo insertamos antes
-        if (celdas_vacias_nuevo < (*lista_sudokus[i]).dame_num_celdas_vacias())
-        {
+    int i = 0;
+    while (i < size && !encontrado) {
+        if (celdas_vacias_nuevo < (*lista_sudokus[i]).dame_num_celdas_vacias()) {
             pos = i;
             encontrado = true;
         }
-    }
+        i++;
+	}
 
     // Desplazar elementos a la derecha desde pos
     for (int i = size; i > pos; i--)
@@ -154,10 +153,12 @@ bool ListaSudoku::operator==(const ListaSudoku& otra) const {
     if (size != otra.size) {
         resultado = false;
     } else {
-        for (int i = 0; i < size && resultado; i++) {
+        int i = 0;
+        while (i < size && resultado) {
             if ((*this)[i].dame_num_celdas_vacias() != otra[i].dame_num_celdas_vacias()) {
                 resultado = false;
             }
+            i++;
         }
     }
     return resultado;
