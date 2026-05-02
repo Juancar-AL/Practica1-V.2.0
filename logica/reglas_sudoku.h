@@ -1,6 +1,9 @@
 #pragma once
 
 #include <fstream>
+
+#include "../checkML.h"
+
 #include "../modelo/tablero.h"
 
 using namespace std;

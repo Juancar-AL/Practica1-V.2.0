@@ -484,21 +484,26 @@ bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
     bool resultado = false;
     bool decidido = false;
 
-    int dim = dame_dimension();
+    if (dame_num_celdas_vacias() != s2.dame_num_celdas_vacias()) {
+		resultado = (dame_num_celdas_vacias() < s2.dame_num_celdas_vacias());
+        decidido = true;
+    }
+    else {
+        int dim = dame_dimension();
 
-    for (int n = 1; n <= dim && !decidido; n++)
-    {
-        int c1 = cuantas_celdas_pueden_tener(n);
-        int c2 = s2.cuantas_celdas_pueden_tener(n);
-
-        if (c1 != c2)
+        for (int n = 1; n <= dim && !decidido; n++)
         {
-            // Más celdas muy restringidas => sudoku más fácil => "menor".
-            resultado = (c1 > c2);
-            decidido = true;
+            int c1 = cuantas_celdas_pueden_tener(n);
+            int c2 = s2.cuantas_celdas_pueden_tener(n);
+
+            if (c1 != c2)
+            {
+                // Más celdas muy restringidas => sudoku más fácil => "menor".
+                resultado = (c1 > c2);
+                decidido = true;
+            }
         }
     }
-
     return resultado;
 }
 bool tReglasSudoku::operator==(const tReglasSudoku& s2) const{

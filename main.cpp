@@ -30,6 +30,9 @@ tInfoSeleccion menu_inicio(const ListaSudoku& lista_nuevos, const ListaSudoku& l
 
 int main()
 {
+
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
     ListaSudoku lista_nuevos;
     ListaSudoku lista_partidas;
 

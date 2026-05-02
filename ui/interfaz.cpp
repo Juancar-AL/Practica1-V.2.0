@@ -239,16 +239,11 @@ void quitar_valor(tReglasSudoku &reglas, tError &error)
     if (fila < 0 || fila >= dim || columna < 0 || columna >= dim)
     {
         error = valor;
-        return;
     }
-
-    if (reglas.dame_celda(fila, columna) == 0)
+    else if (reglas.dame_celda(fila, columna) == 0)
     {
         error = vacia;
-        return;
-    }
-
-    if (!reglas.quita_valor(fila, columna))
+    } else if (!reglas.quita_valor(fila, columna))
     {
         error = original;
     }

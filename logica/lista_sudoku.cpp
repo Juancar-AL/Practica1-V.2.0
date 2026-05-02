@@ -51,34 +51,36 @@ const tReglasSudoku& ListaSudoku::dame_sudoku(const int& i){
 
 // ==================== MÉTODOS MODIFICADORES ====================
 
-void ListaSudoku::insertar(const tReglasSudoku& sudoku){
-    if(size == cap){
-        int newCap = (cap == 0) ? 1 : cap *2;
+void ListaSudoku::insertar(const tReglasSudoku& sudoku) {
+    if (size == cap) {
+        int newCap = (cap == 0) ? 1 : cap * 2;
         resize_(newCap);
     }
 
     // Encontrar posición ordenada por número de celdas vacías (menor dificultad primero)
     int pos = size;
     int celdas_vacias_nuevo = sudoku.dame_num_celdas_vacias();
-    
+    bool encontrado = false;
     for (int i = 0; i < size; i++)
     {
         if (celdas_vacias_nuevo < (*lista_sudokus[i]).dame_num_celdas_vacias())
         {
             pos = i;
-            break;
+            encontrado = true;
         }
     }
 
-    // Desplazar elementos a la derecha desde pos
-    for (int i = size; i > pos; i--)
-    {
-        lista_sudokus[i] = lista_sudokus[i - 1];
-    }
+    if(!encontrado){
+        // Desplazar elementos a la derecha desde pos
+        for (int i = size; i > pos; i--)
+        {
+            lista_sudokus[i] = lista_sudokus[i - 1];
+        }
 
-    // Insertar en posición ordenada
-    lista_sudokus[pos] = new tReglasSudoku(sudoku);
-    size++;
+        // Insertar en posición ordenada
+        lista_sudokus[pos] = new tReglasSudoku(sudoku);
+        size++;
+    }
 }
 
 void ListaSudoku::eliminar(const int& pos){

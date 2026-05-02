@@ -1,6 +1,9 @@
 #pragma once
 
 #include "reglas_sudoku.h"
+
+#include "../checkML.h"
+
 #include <iostream>
 
 class ListaSudoku {
