@@ -107,6 +107,13 @@ bool tReglasSudoku::coord_valid(const int& f, const int&c) const{
 
 void tReglasSudoku::actualizar_bloqueos(){
     int dim = dame_dimension();
+
+    for (int k = 0; k < lista.cont; k++)
+    {
+        delete lista.lista[k];
+		lista.lista[k] = nullptr;
+    }
+
     lista.cont = 0;
 
     // Asegurar consistencia: si hay capacidad pero no array, crear array vacío
