@@ -111,12 +111,10 @@ tReglasSudoku& ListaSudoku::operator[](int indice) {
 }
 
 ListaSudoku& ListaSudoku::operator=(const ListaSudoku& lista) {
-    // 1) Creamos una copia profunda de 'lista' usando el constructor por copia.
-    //    Si fallase una reserva de memoria aquí, este objeto no cambia.
+	// Creamos una copia local de 'lista' (que se construirá con el constructor de copia).
     ListaSudoku copia(lista);
 
-    // 2) Intercambiamos campos con la copia (copy-and-swap manual).
-    //    Tras esto, *this tiene los datos nuevos y 'copia' los antiguos.
+	// Intercambiamos los miembros de datos de 'this' con los de 'copia'
     int temp_size = size;
     size = copia.size;
     copia.size = temp_size;
@@ -125,12 +123,14 @@ ListaSudoku& ListaSudoku::operator=(const ListaSudoku& lista) {
     cap = copia.cap;
     copia.cap = temp_cap;
 
+	// Intercambiamos los punteros a las listas de sudokus
     tReglasSudoku** temp_lista = lista_sudokus;
     lista_sudokus = copia.lista_sudokus;
     copia.lista_sudokus = temp_lista;
 
-    // 3) Al salir de la función, se destruye 'copia' y libera
-    //    automáticamente los recursos antiguos de *this.
+	// Al salir de esta función, 'copia' se destruirá automáticamente y liberará la memoria que originalmente pertenecía a 'this', mientras que 'this' ahora apunta a la nueva lista de sudokus copiada desde 'lista'.
+
+    
     return *this;
 }
 
