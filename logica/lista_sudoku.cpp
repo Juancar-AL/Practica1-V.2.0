@@ -130,7 +130,6 @@ ListaSudoku& ListaSudoku::operator=(const ListaSudoku& lista) {
 
 	// Al salir de esta función, 'copia' se destruirá automáticamente y liberará la memoria que originalmente pertenecía a 'this', mientras que 'this' ahora apunta a la nueva lista de sudokus copiada desde 'lista'.
 
-    
     return *this;
 }
 

@@ -438,7 +438,7 @@ void tReglasSudoku::ini_matriz3D(){
 
 tReglasSudoku& tReglasSudoku::operator=(const tReglasSudoku& otro) {
     if (this != &otro) {
-        // Liberar recursos actuales
+        // Liberamos memoria actual
         for (int i = 0; i < lista.cont; i++) {
             delete lista.lista[i];
         }
