@@ -53,6 +53,9 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
     if (dim_submatriz <= 0)
         dim_submatriz = 1;
 
+	tReglasSudoku solo_origniales = reglas;
+	solo_origniales.reset();
+
     cout << endl
          << CYAN << "================ SUDOKU ================" << RESET << endl;
 
@@ -76,7 +79,9 @@ void mostrar_sudoku(const tReglasSudoku& reglas){
             if (v == 0)
                 cout << setw(3) << '.';
             else{
-                cout << CYAN << setw(3) << v << RESET;
+                if(v == solo_origniales.dame_celda(i, j))
+                    cout << GRAY << setw(3) << v << RESET;
+                else cout << CYAN << setw(3) << v << RESET;
                 if (reglas.terminado())
                     this_thread::sleep_for(chrono::milliseconds(40));
             }
@@ -300,7 +305,7 @@ bool comenzar_partida(tReglasSudoku &reglas)
 {
     tError error = ninguno;
     tReglasSudoku copia;
-	bool hayCambios = true;
+	bool hayCambios;
 
     int opcion = 0;
 
@@ -330,6 +335,7 @@ bool comenzar_partida(tReglasSudoku &reglas)
             reglas.autocompletar();
             break;
         case 6:
+            hayCambios = true;
             copia = reglas; // Hacemos una copia para no modificar el estado actual del juego
 			while (hayCambios && !copia.terminado()) { // Mientras se sigan completando celdas y el sudoku no esté terminado...
                 int iteracion_anterior = copia.dame_num_celdas_vacias();

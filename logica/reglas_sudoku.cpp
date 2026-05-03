@@ -540,7 +540,7 @@ bool tReglasSudoku::operator<(const tReglasSudoku& s2) const{
 bool tReglasSudoku::operator==(const tReglasSudoku& s2) const{
     bool iguales = true;
 
-    if (dame_dimension() != s2.dame_dimension()) {
+    if (dame_num_celdas_bloqueadas() != s2.dame_num_celdas_vacias()) {
         iguales = false;
     }
     else {

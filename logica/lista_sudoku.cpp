@@ -60,11 +60,10 @@ void ListaSudoku::insertar(const tReglasSudoku& sudoku) {
 
     // Encontrar posición ordenada por número de celdas vacías (menor dificultad primero)
     int pos = size;
-    int celdas_vacias_nuevo = sudoku.dame_num_celdas_vacias();
     bool encontrado = false;
     int i = 0;
     while (i < size && !encontrado) {
-        if (celdas_vacias_nuevo < (*lista_sudokus[i]).dame_num_celdas_vacias()) {
+        if (sudoku < *lista_sudokus[i]) {
             pos = i;
             encontrado = true;
         }
